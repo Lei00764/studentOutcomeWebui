@@ -9,11 +9,11 @@
             <div class="loginTitle">登录</div>
         </div>
 
-        <el-form-item label="用户名" v-bind:class="{ error: isError }">
-            <el-input v-model="loginCredential.user_name" @click="clearErrorBorder" :disabled="locked"/>
+        <el-form-item label="学号" v-bind:class="{ error: isError }">
+            <el-input v-model="loginCredential.stu_id" @click="clearErrorBorder" :disabled="locked"/>
         </el-form-item>
         <el-form-item label="密码" v-bind:class="{ error: isError }">
-            <el-input v-model="loginCredential.password" type="password" @click="clearErrorBorder" show-password :disabled="locked"/>
+            <el-input v-model="loginCredential.user_password" type="password" @click="clearErrorBorder" show-password :disabled="locked"/>
         </el-form-item>
         <div class="errorText">{{errorMsg}}</div>
 
@@ -33,8 +33,8 @@ import {ElMessage} from "element-plus";
 
 
 const loginCredential = reactive({
-    user_name: '',
-    password: '',
+    stu_id: '',
+    user_password: '',
 })
 const locked = ref(false)
 
@@ -44,19 +44,19 @@ const onSubmit = () => {
     errorMsg.value = "";
     isError.value = false;
 
-    if(loginCredential.user_name===''){
-        errorMsg.value = "请输入用户名！"
+    if(loginCredential.stu_id===''){
+        errorMsg.value = "请输入学号！"
         isError.value = true
         return
     }
-    axios.post("/api/user/login",loginCredential).then(response => {
+    axios.post("/api/StudentInfo/login",loginCredential).then(response => {
         isError.value = false;
         errorMsg.value = ''
         router.push("/")
     }).catch(error => {
         if(error.network) return;
         switch(error.errorCode){
-            case 101:
+            case 601:
                 errorMsg.value = "用户名或密码错误";
                 isError.value = true;
                 break;

@@ -29,8 +29,8 @@ const click = () => {
     <div class="avatarHolder" @click="click">
         <el-avatar class="avatar" :size="50" :src="userInfo.avatar_url" :class="{showAvatarBorder: showAvatarBorder}"/>
         <div class="userInfoHolder">
-            <div class="userName">{{ userInfo.user_name }}</div>
-            <div class="userGroup"><span>{{ userGroupNameDict[userInfo.user_group] }}</span><i class="fi fi-ss-hexagon-check verifiedIcon" :class="{notVisible:!userInfo.verified}"></i></div>
+            <div class="userName">{{ userInfo.stu_name }}</div>
+            <div class="userGroup"><span>{{ userInfo.grade }}</span><i class="fi fi-ss-hexagon-check verifiedIcon" :class="{notVisible:!userInfo.verified}"></i></div>
         </div>
     </div>
 </template>

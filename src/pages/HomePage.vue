@@ -18,7 +18,7 @@ const menuItemClick = (ke) => {
 }
 
 const exitButtonClicked = async ()=>{
-    await axios.get("/api/user/logout")
+    await axios.get("/api/StudentInfo/logout")
     window.location.href ="/";
 }
 
@@ -58,14 +58,11 @@ const isLogin = ref(false);
 const loadComplete = ref(true);
 const gotUserInfo = ref(false)
 
-axios.get("/api/user/info").then(response => {
+axios.get("/api/StudentInfo/info").then(response => {
     let responseObj = response.json
-    isLogin.value = responseObj.login;
+    isLogin.value = true;
     gotUserInfo.value = true
-    if(!responseObj.login){
-        router.push("/login")
-        return
-    }
+
     menus.v = [
         {"title":"首页","icon":"fi-rr-home","path":"/"},
     ]
@@ -78,8 +75,14 @@ axios.get("/api/user/info").then(response => {
     userInfo.data = responseObj
     globalData.userInfo = userInfo.data
 }).catch(error => {
-    if(error.network) return
-    error.defaultHandler();
+    if(error.network) return;
+    switch(error.errorCode){
+        case 600:
+            router.push("/login")
+            break;
+        default:
+            error.defaultHandler()
+    }
 })
 
 
