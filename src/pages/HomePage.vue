@@ -65,6 +65,8 @@ axios.get("/api/StudentInfo/info").then(response => {
 
     menus.v = [
         {"title":"首页","icon":"fi-rr-home","path":"/"},
+        {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
+        {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
     ]
     loadComplete.value = false;
     // 等菜单卸载完了再改回来

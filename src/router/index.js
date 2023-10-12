@@ -26,6 +26,22 @@ const router = createRouter({
                     name: "homeView",
                     component: ()=>import("@/views/HomeView.vue"),
                 },
+                {
+                    path: "user",
+                    name: "userView",
+                    component: ()=>import("@/views/UserView.vue"),
+                },
+                {
+                    path: "competition",
+                    name: "competitionSeries",
+                    children: [
+                        {
+                            path: "",
+                            name: "competitionHomeView",
+                            component: ()=>import("@/views/CompetitionView.vue"),
+                        },
+                    ]
+                },
             ]
         },
         { path: '/:pathMatch(.*)*', name: 'NotFound', component: ()=>import("@/pages/ErrorPage.vue") },
