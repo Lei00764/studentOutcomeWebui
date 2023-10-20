@@ -32,6 +32,7 @@ import global from "@/global/global";
 import {ElMessage} from "element-plus";
 
 
+
 const loginCredential = reactive({
     stu_id: '',
     user_password: '',
@@ -49,7 +50,7 @@ const onSubmit = () => {
         isError.value = true
         return
     }
-    axios.post("/api/StudentInfo/login",loginCredential).then(response => {
+    axios.post("http://localhost:7217/StudentInfo/login",loginCredential).then(response => {
         isError.value = false;
         errorMsg.value = ''
         router.push("/")
@@ -65,6 +66,8 @@ const onSubmit = () => {
         }
     })
 }
+
+
 
 const clearErrorBorder = () =>{
     isError.value = false;
