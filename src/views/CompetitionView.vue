@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { ElTable } from 'element-plus'
 import axios from "axios";
 import globalData from "@/global/global"
+import router from "@/router";
 
 const queryForm = reactive({
     field: '',
@@ -109,16 +110,51 @@ const isSelectOnly = computed(()=>{
 })
 
 const inputInvitationCode = () => {
+    ElMessageBox.prompt('请输入邀请码', '邀请码', {
+        confirmButtonText: '提交',
+        cancelButtonText: '取消',
+    }).then(({ value }) => {
+        axios.post("/api/Competition/invitationCode",{
+            invitation_code: value
+        }).then(res => {
+            ElMessage.success("邀请码输入成功")
+            getCompetitionTeam()
+        }).catch(error => {
+            if(error.network) return
+            switch(error.errorCode){
+                case 606:
+                    ElMessage.error("邀请码无效")
+                    break;
+                default:
+                    error.defaultHandler()
+            }
+        })
+    }).catch(() => {
 
+    })
 }
 
-const startEdit = (row) => {
-
+const goStartEdit = (row) => {
+    router.push("/competition/edit/" + row.team_id)
 }
 
 const removeTeam = (row) => {
 
 }
+
+const goNewTeam = () => {
+    router.push("/competition/new");
+}
+
+const goViewTeam = (row) => {
+    router.push("/competition/view/" + row.team_id)
+}
+
+const withDrawTeam = (row) => {
+
+}
+
+
 
 </script>
 
@@ -169,7 +205,7 @@ const removeTeam = (row) => {
             <span v-if="!showAllElements">
                 本账号名下没有竞赛信息，你可以&nbsp;
             </span>
-            <el-button type="primary" @click="" >填报竞赛信息</el-button>
+            <el-button type="primary" @click="goNewTeam">填报竞赛信息</el-button>
             <el-button type="primary" @click="inputInvitationCode" >输入邀请码</el-button>
         </div>
 
@@ -189,8 +225,17 @@ const removeTeam = (row) => {
             </el-table-column>
             <el-table-column label="操作">
                 <template #default="scope">
-                    <el-button link type="primary" size="small" @click="startEdit(scope.row)">编辑</el-button>
-                    <el-button link type="primary" size="small" @click="removeTeam(scope.row.id)">删除</el-button>
+                        <el-button link type="primary" size="small" @click="goStartEdit(scope.row)"
+                                   v-if="scope.row.status_code===0 || scope.row.status_code===3"
+                        >编辑</el-button>
+                        <el-button link type="primary" size="small" @click="removeTeam(scope.row.id)"
+                                   v-if="scope.row.status_code===0 || scope.row.status_code===3"
+                        >删除</el-button>
+                        <el-button link type="primary" size="small" @click="goViewTeam(scope.row) " v-else>查看</el-button>
+                        <el-button link type="primary" size="small" @click="withDrawTeam(scope.row)"
+                                   v-if="scope.row.status_code===1"
+                        >撤回</el-button>
+
                 </template>
             </el-table-column>
         </el-table>
