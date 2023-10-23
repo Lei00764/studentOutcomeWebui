@@ -1,9 +1,11 @@
 <script setup>
+import {useRoute} from "vue-router";
 import router from "@/router";
-import {computed, reactive, ref} from "vue";
+import {computed, reactive, ref, watch} from "vue";
 import axios from "axios";
 import {ElMessage} from "element-plus";
 import { genFileId } from 'element-plus'
+const routerWatchable = useRoute()
 
 const actionText = computed(()=>{
     if(router.currentRoute.value.name === "teamNew")
@@ -15,8 +17,51 @@ const actionText = computed(()=>{
 })
 
 const pageMode = router.currentRoute.value.name;
-
 let teamId = 0;
+
+watch(routerWatchable,(old,newRoute)=>{
+    if(pageMode==="teamNew")
+        return;
+    if(router.currentRoute.value.params?.teamId)
+        teamId = router.currentRoute.value.params?.teamId
+    if(typeof(newRoute.params.teamId) !== "undefined")
+        reloadPage();
+})
+
+const reloadPage = () => {
+    if(pageMode === "teamNew") return;
+    axios.post("/api/Competition/getTeamInfo",{
+        team_id: teamId
+    }).then(res => {
+        let competition = res.json.competition
+        competitions.value = [competition]
+        queryForm.competitionId = competition.id
+        competitionType.value = competition.type_name;
+        organizer.value = competition.organizer;
+
+        let term = res.json.term
+        loadTerms()
+        queryForm.termId = term.id
+        termLevelName.value = term.level_name
+
+        let prize = res.json.prize
+        onTermSelected()
+        queryForm.prizeId = prize.id
+
+        queryForm.awardDate = res.json.award_date
+        queryForm.desc = res.json.desc
+        operationLogs.value = res.json.logs;
+
+        teammates.value = res.json.members;
+    }).catch(error => {
+        console.log(error)
+        loading.value = false
+        if(error.network) return
+        error.defaultHandler()
+    })
+}
+reloadPage()
+
 if(router.currentRoute.value.params?.teamId)
     teamId = router.currentRoute.value.params?.teamId
 
@@ -25,17 +70,19 @@ const terms = ref([])
 const prizes = ref([])
 const loading = ref(false)
 const certificationPictures = ref([])
+const operationLogs = ref([])
+const teammates = ref([])
 
 const queryForm = reactive({
     competitionId: null,
     termId: null,
     prizeId: null,
-    prizeDate: new Date(),
+    awardDate: null,
     desc: ""
 })
 
-const termOrganizer = ref()
-const termType = ref()
+const organizer = ref()
+const termLevelName = ref()
 const competitionType = ref()
 
 const loadCompetitions = (keyword) => {
@@ -57,13 +104,16 @@ const loadCompetitions = (keyword) => {
 
 const loadTerms = () => {
     queryForm.termId = null;
+    queryForm.prizeId = null;
     if(!queryForm.competitionId){
         terms.value = []
+        prizes.value = []
         return
     }
     for(let t of competitions.value){
         if(t.id === queryForm.competitionId){
             competitionType.value = t.type_name
+            organizer.value = t.organizer
         }
     }
 
@@ -87,8 +137,7 @@ const onTermSelected = () => {
     }
     for(let t of terms.value){
         if(t.id === queryForm.termId){
-            termType.value = t.type_name;
-            termOrganizer.value = t.organizer;
+            termLevelName.value = t.level_name;
         }
     }
     axios.post("/api/Competition/termPrize",{
@@ -112,10 +161,68 @@ const swapImg = (newFileList) => {
     console.log(file)
     elUploadImg.value.handleStart(file)
 }
+let certFile = null
+const onImgUpload = (file)=> {
+    certFile = file
+}
 
-const teammates = ref([
-    {user_id:123, stu_id:13245, stu_name:"STUDENT", order:1}
-])
+const checkFrom = () => {
+    return queryForm.competitionId && queryForm.termId && queryForm.prizeId && queryForm.awardDate;
+    // return true;
+}
+
+const onSaveButtonClicked = ()=>{
+    if(pageMode === "teamNew"){
+        if(!checkFrom()){
+            ElMessage.error("请完成竞赛名称、届别、奖项、获奖日期的填写！")
+            return
+        }
+        axios.post("/api/Competition/newTeam",{
+            competition_id: queryForm.competitionId,
+            term_id: queryForm.termId,
+            prize_id: queryForm.prizeId,
+            award_date: queryForm.awardDate,
+            desc: queryForm.desc
+        }).then(async res => {
+            teamId = res.json.team_id;
+            console.log(certificationPictures.value)
+            if(certFile){
+                await uploadImg()
+            }
+            ElMessage.success("竞赛信息保存成功")
+            await router.replace("/competition/edit/" + res.json.team_id)
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler()
+        })
+    }
+}
+
+const uploadImg = async () => {
+    console.log(certFile)
+    if (!certFile)
+        return;
+    try {
+        let res = await axios.post("/api/Competition/imgUpload", {
+            team_id: teamId,
+            image: certFile.raw
+        }, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        })
+        ElMessage.success("证书上传成功")
+    }catch(error){
+        loading.value = false
+        switch (error.errorCode){
+            case 611:
+                ElMessage.error("证书上传失败，请重试")
+                return;
+        }
+        if (error.network) return
+        error.defaultHandler()
+    }
+}
 
 </script>
 
@@ -187,7 +294,7 @@ const teammates = ref([
                 <el-form-item label="获奖日期">
                     <el-date-picker
                         :disabled="!queryForm.termId"
-                        v-model="queryForm.prizeDate"
+                        v-model="queryForm.awardDate"
                         type="date"
                         placeholder="请选择"
                     />
@@ -202,12 +309,12 @@ const teammates = ref([
             </el-col>
             <el-col :span="6">
                 <el-form-item label="主办方">
-                    <el-text>{{termOrganizer}}</el-text>
+                    <el-text>{{organizer}}</el-text>
                 </el-form-item>
             </el-col>
             <el-col :span="6">
                 <el-form-item label="级别">
-                    <el-text>{{termType}}</el-text>
+                    <el-text>{{termLevelName}}</el-text>
                 </el-form-item>
             </el-col>
         </el-row>
@@ -215,7 +322,8 @@ const teammates = ref([
             <el-col :span="24">
                 <el-form-item label="证书">
                     <el-upload action="" :file-list="certificationPictures" accept=".jpg, .jpeg, .png"
-                               :auto-upload="false" list-type="picture" :limit="1" :on-exceed="swapImg" ref="elUploadImg">
+                               :auto-upload="false" list-type="picture" :limit="1" :on-exceed="swapImg"
+                               ref="elUploadImg" :on-change="onImgUpload">
                         <el-button type="primary">点击选择</el-button>
                         <el-text>&nbsp允许.jpg/.png图片</el-text>
                     </el-upload>
@@ -258,6 +366,29 @@ const teammates = ref([
             </el-table-column>
 
         </el-table>
+        <div class="operationButtons" v-if="pageMode==='teamNew' || pageMode==='teamEdit'">
+            <el-button type="primary" @click="onSaveButtonClicked">保存</el-button>
+        </div>
+
+        <el-divider></el-divider>
+
+        <el-col v-if="pageMode!=='teamNew'">
+            <p class="sectionName">操作日志</p>
+        </el-col>
+<!--        <el-table v-if="pageMode!=='teamNew'">-->
+<!--            <el-table-column label="日期" :width="200"/>-->
+<!--            <el-table-column label="操作" />-->
+<!--        </el-table>-->
+        <el-timeline>
+            <el-timeline-item
+                v-for="(activity, index) in operationLogs"
+                :key="index"
+                :timestamp="activity.time"
+            >
+                {{ activity.msg }}
+            </el-timeline-item>
+        </el-timeline>
+
     </div>
 </template>
 
@@ -280,5 +411,16 @@ const teammates = ref([
 .helpText {
     margin: 20px 0 20px 0;
     color: #999;
+}
+
+.operationButtons {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.sectionName {
+    font-size: var(--el-form-label-font-size);
+    color: var(--el-text-color-regular);
+    margin: 10px 0;
 }
 </style>
