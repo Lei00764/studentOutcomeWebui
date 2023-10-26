@@ -3,8 +3,8 @@ import {useRoute} from "vue-router";
 import router from "@/router";
 import {computed, reactive, ref, watch} from "vue";
 import axios from "axios";
-import {ElMessage} from "element-plus";
-import { genFileId } from 'element-plus'
+import {ElMessage, ElMessageBox, genFileId} from "element-plus";
+
 const routerWatchable = useRoute()
 
 const actionText = computed(()=>{
@@ -19,11 +19,14 @@ const actionText = computed(()=>{
 const pageMode = router.currentRoute.value.name;
 let teamId = 0;
 
+if(router.currentRoute.value.params?.teamId)
+    teamId = parseInt(router.currentRoute.value.params?.teamId)
+
 watch(routerWatchable,(old,newRoute)=>{
     if(pageMode==="teamNew")
         return;
     if(router.currentRoute.value.params?.teamId)
-        teamId = router.currentRoute.value.params?.teamId
+        teamId = parseInt(router.currentRoute.value.params?.teamId)
     if(typeof(newRoute.params.teamId) !== "undefined")
         reloadPage();
 })
@@ -53,6 +56,9 @@ const reloadPage = () => {
         operationLogs.value = res.json.logs;
 
         teammates.value = res.json.members;
+
+        isCertImageChanged.value = false
+        certUrl.value = res.json.certification_img_url;
     }).catch(error => {
         console.log(error)
         loading.value = false
@@ -62,9 +68,6 @@ const reloadPage = () => {
 }
 reloadPage()
 
-if(router.currentRoute.value.params?.teamId)
-    teamId = router.currentRoute.value.params?.teamId
-
 const competitions = ref([])
 const terms = ref([])
 const prizes = ref([])
@@ -72,6 +75,9 @@ const loading = ref(false)
 const certificationPictures = ref([])
 const operationLogs = ref([])
 const teammates = ref([])
+
+const certUrl = ref("")
+const isCertImageChanged = ref(false)
 
 const queryForm = reactive({
     competitionId: null,
@@ -164,6 +170,7 @@ const swapImg = (newFileList) => {
 let certFile = null
 const onImgUpload = (file)=> {
     certFile = file
+    isCertImageChanged.value = true
 }
 
 const checkFrom = () => {
@@ -186,22 +193,79 @@ const onSaveButtonClicked = ()=>{
         }).then(async res => {
             teamId = res.json.team_id;
             console.log(certificationPictures.value)
-            if(certFile){
-                await uploadImg()
-            }
+            await uploadImg()
             ElMessage.success("竞赛信息保存成功")
             await router.replace("/competition/edit/" + res.json.team_id)
         }).catch(error => {
             if(error.network) return
             error.defaultHandler()
         })
+    }else if(pageMode === "teamEdit"){
+        // 检查团队设置是否正确
+        let postDataTeammates = []
+        for(let teammate of teammates.value){
+            if(teammate.conflict){
+                ElMessage.error("请正确设置贡献排序，每个排名必须出现且至多出现一次，不允许并列！")
+                return;
+            }
+            postDataTeammates.push({user_id:teammate.user_id, order:teammate.order})
+        }
+        axios.post("/api/Competition/editTeam",{
+            team_id: teamId,
+            competition_id: queryForm.competitionId,
+            term_id: queryForm.termId,
+            prize_id: queryForm.prizeId,
+            award_date: queryForm.awardDate,
+            desc: queryForm.desc,
+            teammates: postDataTeammates
+        }).then(async res => {
+            await uploadImg()
+            ElMessage.success("竞赛信息保存成功")
+            window.location.reload();
+        }).catch(error => {
+            console.log(error)
+            if(error.network) return
+            switch (error.errorCode){
+                case 614:
+                    ElMessage.error("有队伍成员未被包含，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 615:
+                    ElMessage.error("有多余的队伍成员，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 616:
+                    ElMessage.error("贡献设置错误，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 617:
+                    ElMessage.error("请完成竞赛名称、届别、奖项、获奖日期的填写！")
+                    return;
+            }
+            error.defaultHandler()
+        })
     }
 }
 
+// 可以判断需不需要上传图片，不用加其他判断了
 const uploadImg = async () => {
     console.log(certFile)
-    if (!certFile)
+    if (!certFile && !isCertImageChanged.value)
         return;
+
+    // 这时候需要清除图片
+    if (!certFile && isCertImageChanged.value){
+        try {
+            let res = await axios.post("/api/Competition/imgClear", {
+                team_id: teamId,
+            })
+            ElMessage.success("证书清除成功")
+        }catch(error){
+            loading.value = false
+            if (error.network) return
+            error.defaultHandler()
+        }
+        return
+    }
+
+
     try {
         let res = await axios.post("/api/Competition/imgUpload", {
             team_id: teamId,
@@ -214,14 +278,86 @@ const uploadImg = async () => {
         ElMessage.success("证书上传成功")
     }catch(error){
         loading.value = false
+        if (error.network) return
         switch (error.errorCode){
             case 611:
                 ElMessage.error("证书上传失败，请重试")
                 return;
         }
-        if (error.network) return
         error.defaultHandler()
     }
+}
+
+const sortedTeammates = computed(()=>{
+    let ans =  teammates.value.toSorted((a, b) => a.order - b.order);
+    let last = undefined;
+    let maxOrder = ans.length
+    // 由于已经排序，只需检查上一项与这一项的order是否一致
+    for(let teammate of ans){
+        if(teammate.order > maxOrder){
+            teammate.conflict = true;
+        }else if(last && last.order === teammate.order){
+            last.conflict = true;
+            teammate.conflict = true;
+        }else{
+            teammate.conflict = false;
+        }
+        last = teammate
+    }
+    return ans;
+})
+
+const teammateOrderOptions = computed(()=>{
+    let ans = [];
+    let teammateCount = teammates.value.length
+    for(let i = 0; i < teammateCount; i++){
+        ans.push({v:i + 1})
+    }
+    return ans;
+})
+
+const teammateRowClassName = ({row, rowIndex}) => {
+    if(row.conflict)
+        return "teammateError";
+    else
+        return "";
+}
+
+const onRemoveTeammate = (teammateObj) => {
+    ElMessageBox.confirm("确认要删除 "+ teammateObj.stu_name + " 队员吗？本操作将立即生效！", "删除队员",
+    {
+        confirmButtonText: '删除',
+        type: 'warning'
+    }).then(()=>{
+        axios.post("/api/Competition/removeTeammate",{
+            team_id: teamId,
+            user_id: teammateObj.user_id
+        }).then(res => {
+            ElMessage.success("已删除队员 "+ teammateObj.stu_name)
+            teammates.value.splice(teammates.value.indexOf(teammateObj), 1)
+            // 如果不冲突，所有排名在后面的队员排名+1
+            if(!teammateObj.conflict){
+                for(let teammate of teammates.value){
+                    if(teammate.order > teammateObj.order)
+                        teammate.order--;
+                }
+            }
+
+        }).catch(error => {
+            if(error.network) return
+            switch (error.errorCode){
+                case 612:
+                    ElMessage.error("该成员不在队伍中")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    })
+}
+
+const onClearOriginalCertImage = () => {
+    certUrl.value = ""
+    isCertImageChanged.value = true
 }
 
 </script>
@@ -230,7 +366,8 @@ const uploadImg = async () => {
     <div class="viewWrapper">
         <h1 class="pageTitle">{{actionText}}竞赛信息</h1>
         <div class="helpText">
-            帮助：您可以在本页面中{{actionText}}竞赛信息。
+            <p>帮助：您可以在本页面中{{actionText}}竞赛信息。若要填报不在系统中的竞赛信息，请提交工单。</p>
+            <p v-if="pageMode === 'teamEdit'">设置贡献时必须对队员进行排序，每个排名必须出现且至多出现一次，且不允许并列。</p>
         </div>
         <el-row>
             <el-col :span="6">
@@ -279,7 +416,6 @@ const uploadImg = async () => {
                         filterable
                         placeholder="请选择"
                         :disabled="!queryForm.termId"
-
                     >
                         <el-option
                             v-for="item in prizes"
@@ -326,6 +462,14 @@ const uploadImg = async () => {
                                ref="elUploadImg" :on-change="onImgUpload">
                         <el-button type="primary">点击选择</el-button>
                         <el-text>&nbsp允许.jpg/.png图片</el-text>
+                        <template #tip>
+                            <div v-if="!isCertImageChanged && certUrl">
+                                <el-image style="max-width: 800px; height: 100px; margin-top:10px"
+                                          fit="contain" :src="certUrl" :preview-src-list="[certUrl]"/>
+                                <el-button link @click="onClearOriginalCertImage">清除</el-button>
+                            </div>
+
+                        </template>
                     </el-upload>
                 </el-form-item>
             </el-col>
@@ -355,13 +499,24 @@ const uploadImg = async () => {
                 <p>保存后可进一步修改队伍成员及其贡献。</p>
             </el-col>
         </el-row>
-        <el-table :data="teammates" v-if="pageMode!=='teamNew'">
+        <el-table :data="sortedTeammates" v-if="pageMode!=='teamNew'" :row-class-name="teammateRowClassName">
             <el-table-column label="学号" property="stu_id"/>
             <el-table-column label="姓名" property="stu_name"/>
-            <el-table-column label="贡献排名" property="order"/>
+            <el-table-column label="贡献排名">
+                <template #default="scope">
+                    <el-select v-model="scope.row.order" size="small">
+                        <el-option
+                            v-for="item in teammateOrderOptions"
+                            :key="item.v"
+                            :label="item.v"
+                            :value="item.v"
+                        />
+                    </el-select>
+                </template>
+            </el-table-column>
             <el-table-column label="操作">
                 <template #default="scope">
-                    <el-button link type="primary" size="small" @click="">移除</el-button>
+                    <el-button link type="primary" size="small" @click="onRemoveTeammate(scope.row)">移除</el-button>
                 </template>
             </el-table-column>
 
@@ -422,5 +577,9 @@ const uploadImg = async () => {
     font-size: var(--el-form-label-font-size);
     color: var(--el-text-color-regular);
     margin: 10px 0;
+}
+
+:deep(.teammateError) {
+    --el-table-tr-bg-color: var(--el-color-error-light-9);
 }
 </style>
