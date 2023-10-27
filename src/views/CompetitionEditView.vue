@@ -1,9 +1,10 @@
 <script setup>
 import {useRoute} from "vue-router";
 import router from "@/router";
-import {computed, reactive, ref, watch} from "vue";
+import {computed, reactive, ref, watch, h} from "vue";
 import axios from "axios";
 import {ElMessage, ElMessageBox, genFileId} from "element-plus";
+import globalData from "@/global/global"
 
 const routerWatchable = useRoute()
 
@@ -360,6 +361,27 @@ const onClearOriginalCertImage = () => {
     isCertImageChanged.value = true
 }
 
+const onCreateCodeClicked = () => {
+    axios.post("/api/Competition/createInvitationCode",{
+        team_id: teamId,
+    }).then(res => {
+        ElMessage.success("已创建邀请码 "+ res.json.code)
+        ElMessageBox.alert(h('p', null, [
+            h('span', null, "已创建邀请码: "),
+            h('span', {style:'color : var(--el-color-primary);'}, res.json.code),
+            h('span', null, ". 队员在竞赛信息管理页面可以输入邀请码加入本竞赛队伍。之前创建的邀请码（如有）将失效。")
+        ]), "邀请队员")
+    }).catch(error => {
+        if(error.network) return
+        switch (error.errorCode){
+            case 617:
+                ElMessage.error("只有队长可以创建邀请码")
+                return;
+        }
+        error.defaultHandler()
+    })
+}
+
 </script>
 
 <template>
@@ -369,6 +391,11 @@ const onClearOriginalCertImage = () => {
             <p>帮助：您可以在本页面中{{actionText}}竞赛信息。若要填报不在系统中的竞赛信息，请提交工单。</p>
             <p v-if="pageMode === 'teamEdit'">设置贡献时必须对队员进行排序，每个排名必须出现且至多出现一次，且不允许并列。</p>
         </div>
+        <el-row>
+            <el-col :span="24">
+                <p class="sectionTitle">基础信息</p>
+            </el-col>
+        </el-row>
         <el-row>
             <el-col :span="6">
                 <el-form-item label="竞赛名称">
@@ -464,7 +491,7 @@ const onClearOriginalCertImage = () => {
                         <el-text>&nbsp允许.jpg/.png图片</el-text>
                         <template #tip>
                             <div v-if="!isCertImageChanged && certUrl">
-                                <el-image style="max-width: 800px; height: 100px; margin-top:10px"
+                                <el-image style="max-width: 800px; max-height: 100px; margin-top:10px"
                                           fit="contain" :src="certUrl" :preview-src-list="[certUrl]"/>
                                 <el-button link @click="onClearOriginalCertImage">清除</el-button>
                             </div>
@@ -489,9 +516,10 @@ const onClearOriginalCertImage = () => {
 
         <el-row v-if="pageMode!=='teamNew'">
             <el-col :span="24">
-                <el-form-item label="队员贡献">
-                    <el-button type="primary">邀请队员</el-button>
-                </el-form-item>
+                <p class="sectionTitle">
+                    <span>队员贡献</span>&nbsp
+                    <el-button type="primary" @click="onCreateCodeClicked">邀请队员</el-button>
+                </p>
             </el-col>
         </el-row>
         <el-row v-else>
@@ -516,7 +544,14 @@ const onClearOriginalCertImage = () => {
             </el-table-column>
             <el-table-column label="操作">
                 <template #default="scope">
-                    <el-button link type="primary" size="small" @click="onRemoveTeammate(scope.row)">移除</el-button>
+                    <el-button link type="primary"
+                               @click="onRemoveTeammate(scope.row)"
+                               v-if="globalData.userInfo.user_id !== scope.row.user_id">
+                        移除
+                    </el-button>
+                    <el-text v-else>
+                        你
+                    </el-text>
                 </template>
             </el-table-column>
 
@@ -525,15 +560,11 @@ const onClearOriginalCertImage = () => {
             <el-button type="primary" @click="onSaveButtonClicked">保存</el-button>
         </div>
 
-        <el-divider></el-divider>
+        <el-divider />
 
         <el-col v-if="pageMode!=='teamNew'">
-            <p class="sectionName">操作日志</p>
+            <p class="sectionTitle">操作日志</p>
         </el-col>
-<!--        <el-table v-if="pageMode!=='teamNew'">-->
-<!--            <el-table-column label="日期" :width="200"/>-->
-<!--            <el-table-column label="操作" />-->
-<!--        </el-table>-->
         <el-timeline>
             <el-timeline-item
                 v-for="(activity, index) in operationLogs"
@@ -573,10 +604,11 @@ const onClearOriginalCertImage = () => {
     text-align: center;
 }
 
-.sectionName {
-    font-size: var(--el-form-label-font-size);
-    color: var(--el-text-color-regular);
-    margin: 10px 0;
+.sectionTitle {
+    color: var(--el-text-color-primary);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 16px 0;
 }
 
 :deep(.teammateError) {
