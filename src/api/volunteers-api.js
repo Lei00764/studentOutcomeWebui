@@ -15,3 +15,11 @@ export function get_record(params){
         params
     })
 }
+
+export function delete_record(params){
+    return request({
+        url: 'Volunteers/deleteRecord',
+        method: 'post',
+        params
+    })
+}

@@ -2,12 +2,14 @@
     <br>
     <br>
     <br>
-    <el-form :model="volunteers" label-width="120px">
-        <el-form-item label="志愿服务名称" style="width: 500px">
+    <el-form :model="volunteers" label-width="120px" status-icon :rules="rules">
+
+        <el-form-item label="志愿服务名称" style="width: 500px" prop="name">
             <el-input v-model="volunteers.VOL_name" />
         </el-form-item>
 
-        <el-form-item label="日期选择器">
+
+        <el-form-item label="日期选择器" prop="time">
             <!-- 日期选择器 -->
             <div class="demo-date-picker">
                 <div class="block">
@@ -17,7 +19,7 @@
             </div>
         </el-form-item>
 
-        <el-form-item label="时长" class="duration-input">
+        <el-form-item label="时长" class="duration-input" prop="duration">
             <el-input v-model="volunteers.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
 
             <el-input v-model="volunteers.duration_hour" placeholder="小时" clearable />
@@ -25,7 +27,7 @@
 
         <!-- 上传佐证材料(图片) el-upload中的换行的属性用于拖拽上传-->
         <!-- action="#"  -->
-        <el-form-item label="佐证材料">
+        <el-form-item label="佐证材料" prop="evidence">
             <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
                 :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag mutiple>
                 <el-icon>
@@ -57,22 +59,13 @@
     </div>
 
     <!-- 查看历史填报记录 暂时未做分页处理 -->
-    <!-- <el-card v-for="record in HistoryRecord"  class="box-card">
-        <div>
-            <div class="card-header">
-                <span>Card name</span>
-                <el-button class="button" text>Operation button</el-button>
-            </div>
-        </div>
-        <div v-for="o in 4" :key="o" class="text item">{{ 'List item ' + o }}</div>
-    </el-card> -->
 
     <el-space wrap>
-        <el-card v-for="record in HistoryRecord" :key="i" class="box-card" style="width: 250px">
+        <el-card v-for="record in HistoryRecord" class="box-card" style="width: 250px">
             <template #header>
                 <div class="card-header">
                     <span>{{ record.vol_name }}</span>
-                    <el-button class="button" text>修改</el-button>
+                    <el-button class="button" text @click="deleteRecord(record.vol_id)">删除</el-button>
                 </div>
             </template>
             <div class="text item">
@@ -83,7 +76,7 @@
                     <span v-if="record.duration_hour != 0">{{ record.duration_hour }} 小时</span>
                 </p>
                 <p><strong>志愿类型 : </strong>
-                    <span v-if="record.vol_type === null" style="color: cyan;">未审核</span>
+                    <span v-if="record.vol_type === null" style="color: gray;">未审核</span>
                     <span v-else style="color: cyan;">{{ record.vol_type }}</span>
                 </p>
                 <p><strong>审核状态 : </strong>
@@ -102,19 +95,53 @@
 import { computed, onMounted, ref } from 'vue';
 import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue';
 
-import { submit_create, get_record } from '../../src/api/volunteers-api';
+import { submit_create, get_record, delete_record } from '../../src/api/volunteers-api';
+
+
+
 //  import { removeClass } from 'element-plus/es/utils';
+
+// const ruleFormRef = ref({
+//     name: "",
+//     time: "",
+//     duration: 0,
+// })
+
+
+//表单校验
+const rules = ref({
+    name: [
+        {required: true, message: '名字不能为空', trigger: 'blur'},
+        // {max: 30, message: '名称最长不能超过30个字', trigger: 'blur'},
+    ],
+
+    time: [
+        {required: true, message: '时间不能为空', trigger: 'blur'},
+    ],
+
+    duration: [
+        {required: true, message: "时长不能为空", trigger: 'blur'},
+    ],
+
+})
+
+
+
+
 
 // 佐证材料部分的数据结构
 const fileList = ref([]);
 
 // Do not use the same name with ref
-const volunteers = {
+//使用的时候要加ref()
+const volunteers = ref({
     VOL_name: '',
     participate_time: '',
     duration_day: '',
     duration_hour: '',
-};
+});
+
+
 
 // 上传数据给后端
 const onSubmit = () => {
@@ -123,19 +150,23 @@ const onSubmit = () => {
     console.log(evidencecheck.dialogImageUrl);
 
     submit_create({
-        user_id: 1,
-        VOL_name: volunteers.VOL_name,
-        participate_time: new Date(volunteers.participate_time).toISOString().split('T')[0],
-        duration_day: parseToInt(volunteers.duration_day),
-        duration_hour: parseToInt(volunteers.duration_hour),
+        user_id: 2,
+        VOL_name: volunteers.value.VOL_name,
+        participate_time: new Date(volunteers.value.participate_time).toISOString().split('T')[0],
+        // participate_time: dateString,
+        duration_day: parseToInt(volunteers.value.duration_day),
+        duration_hour: parseToInt(volunteers.value.duration_hour),
         evidence: evidencecheck.dialogImageUrl,
     })
         .then((res) => {
             console.log(res.status);
+
         })
         .catch((error) => {
             console.error('Error enrolling in training:', error);
         });
+
+    location.reload();
 };
 
 // 佐证材料预览的数据结构
@@ -186,6 +217,26 @@ async function getHistoryRecord(value) {
         console.log(err);
     }
 
+}
+
+
+//删除记录
+function deleteRecord(nowvol_id) {
+    console.log("delete record");
+    const vol_id = parseToInt(nowvol_id);
+    const res = delete_record({ VOL_id: vol_id });
+    console.log(res);
+    console.log(res.code);
+    //location.reload(); // 重新加载整个页面
+    if (res.code === 200) {
+        // 找到要删除的记录在 HistoryRecord 中的索引
+        const index = HistoryRecord.findIndex(record => record.vol_id === vol_id);
+        consle.log(index)
+        if (index !== -1) {
+            // 从 HistoryRecord 中删除记录
+            this.HistoryRecord.splice(index, 1);
+        }
+    }
 }
 
 onMounted(() => {
