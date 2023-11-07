@@ -53,7 +53,7 @@ const router = createRouter({
                         {
                             path: "view/:teamId",
                             name: "teamView",
-                            component: () => import("@/views/CompetitionEditView.vue")
+                            component: () => import("@/views/CompetitionViewView.vue")
                         }
 
                     ]

@@ -1,9 +1,12 @@
 <script setup>
+import {useRoute} from "vue-router";
 import router from "@/router";
-import {computed, reactive, ref} from "vue";
+import {computed, reactive, ref, watch, h} from "vue";
 import axios from "axios";
-import {ElMessage} from "element-plus";
-import { genFileId } from 'element-plus'
+import {ElMessage, ElMessageBox, genFileId} from "element-plus";
+import globalData from "@/global/global"
+
+const routerWatchable = useRoute()
 
 const actionText = computed(()=>{
     if(router.currentRoute.value.name === "teamNew")
@@ -15,27 +18,78 @@ const actionText = computed(()=>{
 })
 
 const pageMode = router.currentRoute.value.name;
-
 let teamId = 0;
+
 if(router.currentRoute.value.params?.teamId)
-    teamId = router.currentRoute.value.params?.teamId
+    teamId = parseInt(router.currentRoute.value.params?.teamId)
+
+watch(routerWatchable,(old,newRoute)=>{
+    if(pageMode==="teamNew")
+        return;
+    if(router.currentRoute.value.params?.teamId)
+        teamId = parseInt(router.currentRoute.value.params?.teamId)
+    if(typeof(newRoute.params.teamId) !== "undefined")
+        reloadPage();
+})
+
+const reloadPage = () => {
+    if(pageMode === "teamNew") return;
+    axios.post("/api/Competition/getTeamInfo",{
+        team_id: teamId
+    }).then(res => {
+        let competition = res.json.competition
+        competitions.value = [competition]
+        queryForm.competitionId = competition.id
+        competitionType.value = competition.type_name;
+        organizer.value = competition.organizer;
+
+        let term = res.json.term
+        loadTerms()
+        queryForm.termId = term.id
+        termLevelName.value = term.level_name
+
+        let prize = res.json.prize
+        onTermSelected()
+        queryForm.prizeId = prize.id
+
+        queryForm.awardDate = res.json.award_date
+        queryForm.desc = res.json.desc
+        operationLogs.value = res.json.logs;
+
+        teammates.value = res.json.members;
+
+        isCertImageChanged.value = false
+        certUrl.value = res.json.certification_img_url;
+    }).catch(error => {
+        console.log(error)
+        loading.value = false
+        if(error.network) return
+        error.defaultHandler()
+    })
+}
+reloadPage()
 
 const competitions = ref([])
 const terms = ref([])
 const prizes = ref([])
 const loading = ref(false)
 const certificationPictures = ref([])
+const operationLogs = ref([])
+const teammates = ref([])
+
+const certUrl = ref("")
+const isCertImageChanged = ref(false)
 
 const queryForm = reactive({
     competitionId: null,
     termId: null,
     prizeId: null,
-    prizeDate: new Date(),
+    awardDate: null,
     desc: ""
 })
 
-const termOrganizer = ref()
-const termType = ref()
+const organizer = ref()
+const termLevelName = ref()
 const competitionType = ref()
 
 const loadCompetitions = (keyword) => {
@@ -57,13 +111,16 @@ const loadCompetitions = (keyword) => {
 
 const loadTerms = () => {
     queryForm.termId = null;
+    queryForm.prizeId = null;
     if(!queryForm.competitionId){
         terms.value = []
+        prizes.value = []
         return
     }
     for(let t of competitions.value){
         if(t.id === queryForm.competitionId){
             competitionType.value = t.type_name
+            organizer.value = t.organizer
         }
     }
 
@@ -87,8 +144,7 @@ const onTermSelected = () => {
     }
     for(let t of terms.value){
         if(t.id === queryForm.termId){
-            termType.value = t.type_name;
-            termOrganizer.value = t.organizer;
+            termLevelName.value = t.level_name;
         }
     }
     axios.post("/api/Competition/termPrize",{
@@ -112,10 +168,219 @@ const swapImg = (newFileList) => {
     console.log(file)
     elUploadImg.value.handleStart(file)
 }
+let certFile = null
+const onImgUpload = (file)=> {
+    certFile = file
+    isCertImageChanged.value = true
+}
 
-const teammates = ref([
-    {user_id:123, stu_id:13245, stu_name:"STUDENT", order:1}
-])
+const checkFrom = () => {
+    return queryForm.competitionId && queryForm.termId && queryForm.prizeId && queryForm.awardDate;
+    // return true;
+}
+
+const onSaveButtonClicked = ()=>{
+    if(pageMode === "teamNew"){
+        if(!checkFrom()){
+            ElMessage.error("请完成竞赛名称、届别、奖项、获奖日期的填写！")
+            return
+        }
+        axios.post("/api/Competition/newTeam",{
+            competition_id: queryForm.competitionId,
+            term_id: queryForm.termId,
+            prize_id: queryForm.prizeId,
+            award_date: queryForm.awardDate,
+            desc: queryForm.desc
+        }).then(async res => {
+            teamId = res.json.team_id;
+            console.log(certificationPictures.value)
+            await uploadImg()
+            ElMessage.success("竞赛信息保存成功")
+            await router.replace("/competition/edit/" + res.json.team_id)
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler()
+        })
+    }else if(pageMode === "teamEdit"){
+        // 检查团队设置是否正确
+        let postDataTeammates = []
+        for(let teammate of teammates.value){
+            if(teammate.conflict){
+                ElMessage.error("请正确设置贡献排序，每个排名必须出现且至多出现一次，不允许并列！")
+                return;
+            }
+            postDataTeammates.push({user_id:teammate.user_id, order:teammate.order})
+        }
+        axios.post("/api/Competition/editTeam",{
+            team_id: teamId,
+            competition_id: queryForm.competitionId,
+            term_id: queryForm.termId,
+            prize_id: queryForm.prizeId,
+            award_date: queryForm.awardDate,
+            desc: queryForm.desc,
+            teammates: postDataTeammates
+        }).then(async res => {
+            await uploadImg()
+            ElMessage.success("竞赛信息保存成功")
+            window.location.reload();
+        }).catch(error => {
+            console.log(error)
+            if(error.network) return
+            switch (error.errorCode){
+                case 614:
+                    ElMessage.error("有队伍成员未被包含，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 615:
+                    ElMessage.error("有多余的队伍成员，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 616:
+                    ElMessage.error("贡献设置错误，如果你认为这是个错误，请刷新页面。")
+                    return;
+                case 617:
+                    ElMessage.error("请完成竞赛名称、届别、奖项、获奖日期的填写！")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    }
+}
+
+// 可以判断需不需要上传图片，不用加其他判断了
+const uploadImg = async () => {
+    console.log(certFile)
+    if (!certFile && !isCertImageChanged.value)
+        return;
+
+    // 这时候需要清除图片
+    if (!certFile && isCertImageChanged.value){
+        try {
+            let res = await axios.post("/api/Competition/imgClear", {
+                team_id: teamId,
+            })
+            ElMessage.success("证书清除成功")
+        }catch(error){
+            loading.value = false
+            if (error.network) return
+            error.defaultHandler()
+        }
+        return
+    }
+
+
+    try {
+        let res = await axios.post("/api/Competition/imgUpload", {
+            team_id: teamId,
+            image: certFile.raw
+        }, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        })
+        ElMessage.success("证书上传成功")
+    }catch(error){
+        loading.value = false
+        if (error.network) return
+        switch (error.errorCode){
+            case 611:
+                ElMessage.error("证书上传失败，请重试")
+                return;
+        }
+        error.defaultHandler()
+    }
+}
+
+const sortedTeammates = computed(()=>{
+    let ans =  teammates.value.toSorted((a, b) => a.order - b.order);
+    let last = undefined;
+    let maxOrder = ans.length
+    // 由于已经排序，只需检查上一项与这一项的order是否一致
+    for(let teammate of ans){
+        if(teammate.order > maxOrder){
+            teammate.conflict = true;
+        }else if(last && last.order === teammate.order){
+            last.conflict = true;
+            teammate.conflict = true;
+        }else{
+            teammate.conflict = false;
+        }
+        last = teammate
+    }
+    return ans;
+})
+
+const teammateOrderOptions = computed(()=>{
+    let ans = [];
+    let teammateCount = teammates.value.length
+    for(let i = 0; i < teammateCount; i++){
+        ans.push({v:i + 1})
+    }
+    return ans;
+})
+
+const teammateRowClassName = ({row, rowIndex}) => {
+    if(row.conflict)
+        return "teammateError";
+    else
+        return "";
+}
+
+const onRemoveTeammate = (teammateObj) => {
+    ElMessageBox.confirm("确认要删除 "+ teammateObj.stu_name + " 队员吗？本操作将立即生效！", "删除队员",
+    {
+        confirmButtonText: '删除',
+        type: 'warning'
+    }).then(()=>{
+        axios.post("/api/Competition/removeTeammate",{
+            team_id: teamId,
+            user_id: teammateObj.user_id
+        }).then(res => {
+            ElMessage.success("已删除队员 "+ teammateObj.stu_name)
+            teammates.value.splice(teammates.value.indexOf(teammateObj), 1)
+            // 如果不冲突，所有排名在后面的队员排名+1
+            if(!teammateObj.conflict){
+                for(let teammate of teammates.value){
+                    if(teammate.order > teammateObj.order)
+                        teammate.order--;
+                }
+            }
+
+        }).catch(error => {
+            if(error.network) return
+            switch (error.errorCode){
+                case 612:
+                    ElMessage.error("该成员不在队伍中")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    })
+}
+
+const onClearOriginalCertImage = () => {
+    certUrl.value = ""
+    isCertImageChanged.value = true
+}
+
+const onCreateCodeClicked = () => {
+    axios.post("/api/Competition/createInvitationCode",{
+        team_id: teamId,
+    }).then(res => {
+        ElMessage.success("已创建邀请码 "+ res.json.code)
+        ElMessageBox.alert(h('p', null, [
+            h('span', null, "已创建邀请码: "),
+            h('span', {style:'color : var(--el-color-primary);'}, res.json.code),
+            h('span', null, ". 队员在竞赛信息管理页面可以输入邀请码加入本竞赛队伍。之前创建的邀请码（如有）将失效。")
+        ]), "邀请队员")
+    }).catch(error => {
+        if(error.network) return
+        switch (error.errorCode){
+            case 617:
+                ElMessage.error("只有队长可以创建邀请码")
+                return;
+        }
+        error.defaultHandler()
+    })
+}
 
 </script>
 
@@ -123,8 +388,14 @@ const teammates = ref([
     <div class="viewWrapper">
         <h1 class="pageTitle">{{actionText}}竞赛信息</h1>
         <div class="helpText">
-            帮助：您可以在本页面中{{actionText}}竞赛信息。
+            <p>帮助：您可以在本页面中{{actionText}}竞赛信息。若要填报不在系统中的竞赛信息，请提交工单。</p>
+            <p v-if="pageMode === 'teamEdit'">设置贡献时必须对队员进行排序，每个排名必须出现且至多出现一次，且不允许并列。</p>
         </div>
+        <el-row>
+            <el-col :span="24">
+                <p class="sectionTitle">基础信息</p>
+            </el-col>
+        </el-row>
         <el-row>
             <el-col :span="6">
                 <el-form-item label="竞赛名称">
@@ -172,7 +443,6 @@ const teammates = ref([
                         filterable
                         placeholder="请选择"
                         :disabled="!queryForm.termId"
-
                     >
                         <el-option
                             v-for="item in prizes"
@@ -187,7 +457,7 @@ const teammates = ref([
                 <el-form-item label="获奖日期">
                     <el-date-picker
                         :disabled="!queryForm.termId"
-                        v-model="queryForm.prizeDate"
+                        v-model="queryForm.awardDate"
                         type="date"
                         placeholder="请选择"
                     />
@@ -202,12 +472,12 @@ const teammates = ref([
             </el-col>
             <el-col :span="6">
                 <el-form-item label="主办方">
-                    <el-text>{{termOrganizer}}</el-text>
+                    <el-text>{{organizer}}</el-text>
                 </el-form-item>
             </el-col>
             <el-col :span="6">
                 <el-form-item label="级别">
-                    <el-text>{{termType}}</el-text>
+                    <el-text>{{termLevelName}}</el-text>
                 </el-form-item>
             </el-col>
         </el-row>
@@ -215,9 +485,18 @@ const teammates = ref([
             <el-col :span="24">
                 <el-form-item label="证书">
                     <el-upload action="" :file-list="certificationPictures" accept=".jpg, .jpeg, .png"
-                               :auto-upload="false" list-type="picture" :limit="1" :on-exceed="swapImg" ref="elUploadImg">
+                               :auto-upload="false" list-type="picture" :limit="1" :on-exceed="swapImg"
+                               ref="elUploadImg" :on-change="onImgUpload">
                         <el-button type="primary">点击选择</el-button>
                         <el-text>&nbsp允许.jpg/.png图片</el-text>
+                        <template #tip>
+                            <div v-if="!isCertImageChanged && certUrl">
+                                <el-image style="max-width: 800px; max-height: 100px; margin-top:10px"
+                                          fit="contain" :src="certUrl" :preview-src-list="[certUrl]"/>
+                                <el-button link @click="onClearOriginalCertImage">清除</el-button>
+                            </div>
+
+                        </template>
                     </el-upload>
                 </el-form-item>
             </el-col>
@@ -237,9 +516,10 @@ const teammates = ref([
 
         <el-row v-if="pageMode!=='teamNew'">
             <el-col :span="24">
-                <el-form-item label="队员贡献">
-                    <el-button type="primary">邀请队员</el-button>
-                </el-form-item>
+                <p class="sectionTitle">
+                    <span>队员贡献</span>&nbsp
+                    <el-button type="primary" @click="onCreateCodeClicked">邀请队员</el-button>
+                </p>
             </el-col>
         </el-row>
         <el-row v-else>
@@ -247,17 +527,54 @@ const teammates = ref([
                 <p>保存后可进一步修改队伍成员及其贡献。</p>
             </el-col>
         </el-row>
-        <el-table :data="teammates" v-if="pageMode!=='teamNew'">
+        <el-table :data="sortedTeammates" v-if="pageMode!=='teamNew'" :row-class-name="teammateRowClassName">
             <el-table-column label="学号" property="stu_id"/>
             <el-table-column label="姓名" property="stu_name"/>
-            <el-table-column label="贡献排名" property="order"/>
+            <el-table-column label="贡献排名">
+                <template #default="scope">
+                    <el-select v-model="scope.row.order" size="small">
+                        <el-option
+                            v-for="item in teammateOrderOptions"
+                            :key="item.v"
+                            :label="item.v"
+                            :value="item.v"
+                        />
+                    </el-select>
+                </template>
+            </el-table-column>
             <el-table-column label="操作">
                 <template #default="scope">
-                    <el-button link type="primary" size="small" @click="">移除</el-button>
+                    <el-button link type="primary"
+                               @click="onRemoveTeammate(scope.row)"
+                               v-if="globalData.userInfo.user_id !== scope.row.user_id">
+                        移除
+                    </el-button>
+                    <el-text v-else>
+                        你
+                    </el-text>
                 </template>
             </el-table-column>
 
         </el-table>
+        <div class="operationButtons" v-if="pageMode==='teamNew' || pageMode==='teamEdit'">
+            <el-button type="primary" @click="onSaveButtonClicked">保存</el-button>
+        </div>
+
+        <el-divider />
+
+        <el-col v-if="pageMode!=='teamNew'">
+            <p class="sectionTitle">操作日志</p>
+        </el-col>
+        <el-timeline>
+            <el-timeline-item
+                v-for="(activity, index) in operationLogs"
+                :key="index"
+                :timestamp="activity.time"
+            >
+                {{ activity.msg }}
+            </el-timeline-item>
+        </el-timeline>
+
     </div>
 </template>
 
@@ -280,5 +597,21 @@ const teammates = ref([
 .helpText {
     margin: 20px 0 20px 0;
     color: #999;
+}
+
+.operationButtons {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.sectionTitle {
+    color: var(--el-text-color-primary);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 16px 0;
+}
+
+:deep(.teammateError) {
+    --el-table-tr-bg-color: var(--el-color-error-light-9);
 }
 </style>
