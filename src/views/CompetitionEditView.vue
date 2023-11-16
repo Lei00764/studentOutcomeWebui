@@ -211,15 +211,23 @@ const onSaveButtonClicked = ()=>{
             }
             postDataTeammates.push({user_id:teammate.user_id, order:teammate.order})
         }
-        axios.post("/api/Competition/editTeam",{
+
+        let data = {
             team_id: teamId,
-            competition_id: queryForm.competitionId,
-            term_id: queryForm.termId,
-            prize_id: queryForm.prizeId,
-            award_date: queryForm.awardDate,
-            desc: queryForm.desc,
-            teammates: postDataTeammates
-        }).then(async res => {
+        }
+        if(!teammatesNotChanged.value){
+            data.teammates = postDataTeammates
+        }
+        if(!infoNotChanged.value){
+            data.info = {
+                competition_id: queryForm.competitionId,
+                term_id: queryForm.termId,
+                prize_id: queryForm.prizeId,
+                award_date: queryForm.awardDate,
+                desc: queryForm.desc,
+            }
+        }
+        axios.post("/api/Competition/editTeam",data).then(async res => {
             await uploadImg()
             ElMessage.success("竞赛信息保存成功")
             window.location.reload();
@@ -324,37 +332,6 @@ const teammateRowClassName = ({row, rowIndex}) => {
         return "";
 }
 
-const onRemoveTeammate = (teammateObj) => {
-    ElMessageBox.confirm("确认要删除 "+ teammateObj.stu_name + " 队员吗？本操作将立即生效！", "删除队员",
-    {
-        confirmButtonText: '删除',
-        type: 'warning'
-    }).then(()=>{
-        axios.post("/api/Competition/removeTeammate",{
-            team_id: teamId,
-            user_id: teammateObj.user_id
-        }).then(res => {
-            ElMessage.success("已删除队员 "+ teammateObj.stu_name)
-            teammates.value.splice(teammates.value.indexOf(teammateObj), 1)
-            // 如果不冲突，所有排名在后面的队员排名+1
-            if(!teammateObj.conflict){
-                for(let teammate of teammates.value){
-                    if(teammate.order > teammateObj.order)
-                        teammate.order--;
-                }
-            }
-
-        }).catch(error => {
-            if(error.network) return
-            switch (error.errorCode){
-                case 612:
-                    ElMessage.error("该成员不在队伍中")
-                    return;
-            }
-            error.defaultHandler()
-        })
-    })
-}
 
 const onClearOriginalCertImage = () => {
     certUrl.value = ""
@@ -369,7 +346,7 @@ const onCreateCodeClicked = () => {
         ElMessageBox.alert(h('p', null, [
             h('span', null, "已创建邀请码: "),
             h('span', {style:'color : var(--el-color-primary);'}, res.json.code),
-            h('span', null, ". 队员在竞赛信息管理页面可以输入邀请码加入本竞赛队伍。之前创建的邀请码（如有）将失效。")
+            h('span', null, ". 队员在竞赛信息管理页面可以输入邀请码加入本竞赛队伍。邀请码有效期24小时。")
         ]), "邀请队员")
     }).catch(error => {
         if(error.network) return
@@ -381,6 +358,75 @@ const onCreateCodeClicked = () => {
         error.defaultHandler()
     })
 }
+
+const onSubmitButtonClicked = () => {
+    ElMessageBox.confirm("确认要提交审核吗？如果进行了修改请先保存。", "提交审核",
+        {
+            type: 'warning'
+        }).then(()=>{
+        axios.post("/api/Competition/submitToReview",{
+            team_id: teamId,
+        }).then(res => {
+            ElMessage.success("已提交审核 ")
+            router.replace('/competition/view/' + teamId);
+
+        }).catch(error => {
+            if(error.network) return
+            switch (error.errorCode){
+                case 621:
+                    ElMessage.error("有队伍成员没有确认贡献")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    })
+}
+
+const teammatesNotChanged = ref(true)
+const infoNotChanged = ref(true)
+const setCannotVerify = (_) => {
+    teammatesNotChanged.value = false;
+}
+const setInfoChanged = (_) => {
+    infoNotChanged.value = false;
+}
+
+const setVerified = (row) => {
+    axios.post("/api/Competition/setVerification",{
+        team_id: teamId,
+        verified: 1
+    }).then(res => {
+        ElMessage.success("已确认贡献排名，当排名发生更改时需要重新确认。")
+        row.verified = true;
+    }).catch(error => {
+        if(error.network) return;
+        switch (error.errorCode) {
+            case 620:
+                ElMessage.error("只有草稿和被打回状态可以修改确认状态。")
+                return;
+        }
+        error.defaultHandler()
+    })
+}
+
+const cancelVerified = (row) => {
+    axios.post("/api/Competition/setVerification",{
+        team_id: teamId,
+        verified: 0
+    }).then(res => {
+        ElMessage.success("已取消确认贡献排名，当排名发生更改时需要重新确认。")
+        row.verified = false;
+    }).catch(error => {
+        if(error.network) return;
+        switch (error.errorCode) {
+            case 620:
+                ElMessage.error("只有草稿和被打回状态可以修改确认状态。")
+                return;
+        }
+        error.defaultHandler()
+    })
+}
+
 
 </script>
 
@@ -407,7 +453,7 @@ const onCreateCodeClicked = () => {
                         remote-show-suffix
                         :remote-method="loadCompetitions"
                         :loading="loading"
-                        @change="loadTerms"
+                        @change="(_)=>{loadTerms();setInfoChanged(_);}"
                     >
                         <el-option
                             v-for="item in competitions"
@@ -425,7 +471,7 @@ const onCreateCodeClicked = () => {
                         filterable
                         placeholder="请选择"
                         :disabled="!queryForm.competitionId"
-                        @change="onTermSelected"
+                        @change="(_)=>{onTermSelected();setInfoChanged(_);}"
                     >
                         <el-option
                             v-for="item in terms"
@@ -443,6 +489,7 @@ const onCreateCodeClicked = () => {
                         filterable
                         placeholder="请选择"
                         :disabled="!queryForm.termId"
+                        @change="setInfoChanged"
                     >
                         <el-option
                             v-for="item in prizes"
@@ -460,6 +507,7 @@ const onCreateCodeClicked = () => {
                         v-model="queryForm.awardDate"
                         type="date"
                         placeholder="请选择"
+                        @change="setInfoChanged"
                     />
                 </el-form-item>
             </el-col>
@@ -509,6 +557,7 @@ const onCreateCodeClicked = () => {
                         :autosize="{ minRows: 2, maxRows: 10 }"
                         type="textarea"
                         placeholder=""
+                        @input="setInfoChanged"
                     />
                 </el-form-item>
             </el-col>
@@ -527,12 +576,12 @@ const onCreateCodeClicked = () => {
                 <p>保存后可进一步修改队伍成员及其贡献。</p>
             </el-col>
         </el-row>
-        <el-table :data="sortedTeammates" v-if="pageMode!=='teamNew'" :row-class-name="teammateRowClassName">
+        <el-table :data="sortedTeammates" v-if="pageMode!=='teamNew'" :row-class-name="teammateRowClassName" >
             <el-table-column label="学号" property="stu_id"/>
             <el-table-column label="姓名" property="stu_name"/>
             <el-table-column label="贡献排名">
                 <template #default="scope">
-                    <el-select v-model="scope.row.order" size="small">
+                    <el-select v-model="scope.row.order" size="small" @change="setCannotVerify">
                         <el-option
                             v-for="item in teammateOrderOptions"
                             :key="item.v"
@@ -542,22 +591,34 @@ const onCreateCodeClicked = () => {
                     </el-select>
                 </template>
             </el-table-column>
-            <el-table-column label="操作">
+            <el-table-column label="确认状态">
                 <template #default="scope">
-                    <el-button link type="primary"
-                               @click="onRemoveTeammate(scope.row)"
-                               v-if="globalData.userInfo.user_id !== scope.row.user_id">
-                        移除
-                    </el-button>
-                    <el-text v-else>
-                        你
-                    </el-text>
+                    <div v-if="globalData.userInfo.user_id !== scope.row.user_id">
+                        <el-tag type="success" v-if="scope.row.verified">已确认</el-tag>
+                        <el-tag type="info" v-else>未确认</el-tag>
+                    </div>
+                    <div v-else>
+                        <div v-if="teammatesNotChanged">
+                            <el-button size="small" type="danger" @click="cancelVerified(scope.row)" v-if="scope.row.verified">取消确认</el-button>
+                            <el-button size="small" type="primary" @click="setVerified(scope.row)" v-else>确认</el-button>
+
+                        </div>
+                        <div v-else>
+                            <el-tooltip content="你对成员贡献顺序进行了修改，请先保存再进行操作">
+                                <el-button disabled size="small" type="danger"  v-if="scope.row.verified">取消确认</el-button>
+                                <el-button disabled size="small" type="primary" v-else>确认</el-button>
+                            </el-tooltip>
+                        </div>
+
+                    </div>
+
                 </template>
             </el-table-column>
 
         </el-table>
         <div class="operationButtons" v-if="pageMode==='teamNew' || pageMode==='teamEdit'">
-            <el-button type="primary" @click="onSaveButtonClicked">保存</el-button>
+            <el-button type="primary" @click="onSaveButtonClicked" :disabled="infoNotChanged && teammatesNotChanged">保存草稿</el-button>
+            <el-button type="primary" @click="onSubmitButtonClicked">提交审核</el-button>
         </div>
 
         <el-divider />

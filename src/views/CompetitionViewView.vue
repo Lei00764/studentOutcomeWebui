@@ -14,8 +14,6 @@ if(router.currentRoute.value.params?.teamId)
     teamId = parseInt(router.currentRoute.value.params?.teamId)
 
 watch(routerWatchable,(old,newRoute)=>{
-    if(pageMode==="teamNew")
-        return;
     if(router.currentRoute.value.params?.teamId)
         teamId = parseInt(router.currentRoute.value.params?.teamId)
     if(typeof(newRoute.params.teamId) !== "undefined")
@@ -65,7 +63,6 @@ const operationLogs = ref([])
 const teammates = ref([])
 
 const certUrl = ref("")
-const isOwner = ref(false)
 const statusCode = ref(0)
 
 const statusCodeList = {
@@ -122,7 +119,6 @@ const teammateRowClassName = ({row, rowIndex}) => {
         <h1 class="pageTitle">查看竞赛信息</h1>
         <div class="helpText">
             <p>帮助：您可以在本页面中查看竞赛信息。若要填报不在系统中的竞赛信息，请提交工单。</p>
-            <p v-if="!isOwner">请联系队长对竞赛信息进行编辑。</p>
         </div>
         <el-descriptions
             class="margin-top"

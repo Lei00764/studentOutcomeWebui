@@ -118,7 +118,9 @@ const inputInvitationCode = () => {
             invitation_code: value
         }).then(res => {
             ElMessage.success("邀请码输入成功")
-            getCompetitionTeam()
+            setTimeout(()=>{
+                getCompetitionTeam()
+            }, 1000)
         }).catch(error => {
             if(error.network) return
             switch(error.errorCode){
@@ -138,8 +140,34 @@ const goStartEdit = (row) => {
     router.push("/competition/edit/" + row.team_id)
 }
 
-const removeTeam = (row) => {
+const leaveTeam = (selectedTeamId) => {
+    ElMessageBox.confirm("确认要退出本参赛队伍吗？如果你是最后一个成员，本条参赛信息将被删除。", "退出队伍",
+        {
+            type: 'warning',
+            confirmButtonText: '退出'
+        }).then(()=>{
+        axios.post("/api/Competition/leaveTeam",{
+            team_id: selectedTeamId,
+        }).then(res => {
+            ElMessage.success("已从所选参赛队伍中退出。")
+            setTimeout(()=>{
+                getCompetitionTeam()
+            }, 1000)
 
+
+        }).catch(error => {
+            if(error.network) return
+            switch (error.errorCode){
+                case 612:
+                    ElMessage.error("你已经不在队伍中了。")
+                    return;
+                case 613:
+                    ElMessage.error("只能从草稿/打回状态的参赛队伍中退出。")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    })
 }
 
 const goNewTeam = () => {
@@ -150,8 +178,30 @@ const goViewTeam = (row) => {
     router.push("/competition/view/" + row.team_id)
 }
 
-const withDrawTeam = (row) => {
+const withdrawTeam = (selectedTeamId) => {
+    ElMessageBox.confirm("确认要撤回审核请求？重新审核需要重新排队。", "撤回审核申请",
+        {
+            type: 'warning',
+            confirmButtonText: '撤回'
+        }).then(()=>{
+        axios.post("/api/Competition/withdrawTeam",{
+            team_id: selectedTeamId,
+        }).then(res => {
+            ElMessage.success("已撤回所选参赛信息的审核请求。")
+            setTimeout(()=>{
+                getCompetitionTeam()
+            }, 1000)
 
+        }).catch(error => {
+            if(error.network) return
+            switch (error.errorCode){
+                case 622:
+                    ElMessage.error("只能撤回等待审核状态的参赛信息。")
+                    return;
+            }
+            error.defaultHandler()
+        })
+    })
 }
 
 
@@ -162,7 +212,7 @@ const withDrawTeam = (row) => {
     <div class="viewWrapper">
         <h1 class="pageTitle">竞赛填报</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以新建、修改竞赛信息，也可以使用邀请码加入组长所参与的竞赛队伍。
+            帮助：在本页面中，您可以新建、修改竞赛信息，也可以使用邀请码加入其他人填报的竞赛队伍。
         </div>
         <el-form :inline="true" :model="queryForm" class="queryForm" v-if="showAllElements">
             <el-form-item label="查询字段">
@@ -228,11 +278,11 @@ const withDrawTeam = (row) => {
                         <el-button link type="primary" size="small" @click="goStartEdit(scope.row)"
                                    v-if="scope.row.status_code===0 || scope.row.status_code===3"
                         >编辑</el-button>
-                        <el-button link type="primary" size="small" @click="removeTeam(scope.row.id)"
+                        <el-button link type="primary" size="small" @click="leaveTeam(scope.row.id)"
                                    v-if="scope.row.status_code===0 || scope.row.status_code===3"
-                        >删除</el-button>
+                        >退出队伍</el-button>
                         <el-button link type="primary" size="small" @click="goViewTeam(scope.row) " v-else>查看</el-button>
-                        <el-button link type="primary" size="small" @click="withDrawTeam(scope.row)"
+                        <el-button link type="primary" size="small" @click="withdrawTeam(scope.row)"
                                    v-if="scope.row.status_code===1"
                         >撤回</el-button>
 
