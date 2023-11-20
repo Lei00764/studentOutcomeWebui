@@ -3,7 +3,7 @@ import request from "@/utils/request"
 export function submit_create(params){
     return request({
         url: 'Volunteers/insertVolunteers',
-        method: 'post',
+        method: 'put',
         params
     })
 }
