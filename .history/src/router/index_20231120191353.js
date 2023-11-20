@@ -64,9 +64,9 @@ const router = createRouter({
                     component: ()=>import("@/views/VolunteersView.vue"),
                 },
                 {
-                    path: "socialWork",
-                    name: "socialWork",
-                    component: ()=>import("@/views/socialWork.vue"),
+                    path: "test",
+                    name: "testview",
+                    component: ()=>import("@/views/TestView.vue"),
                 },
                 {
                     path: "test2",

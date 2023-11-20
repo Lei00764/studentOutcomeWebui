@@ -1,6 +1,6 @@
 <template>
      <div class="viewWrapper">
-        <h1 class="pageTitle">志愿服务填报</h1>
+        <h1 class="pageTitle">志愿填报</h1>
         <div class="helpText">
             帮助：在本页面中，您可以新建、修改志愿填报信息。
         </div>
