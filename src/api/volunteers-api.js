@@ -10,7 +10,7 @@ export function submit_create(params){
 
 export function get_record(params){
     return request({
-        url: 'Volunteers/selectStuRecord',
+        url: 'http://127.0.0.1:4523/m2/3206870-0-default/118198285',
         method: 'get',
         params
     })

@@ -200,31 +200,24 @@ function parseToInt(value) {
 const HistoryRecord = ref([]);
 
 async function getHistoryRecord(value) {
-  const userid = parseToInt(value);
-  try {
-    const res = await get_record({ user_id: userid });
-    console.log(res.status);
-    if (res.status === 200) {
-      console.log("success");
-      HistoryRecord.value = res.data.data.map(record => ({
-        userId: record.user_id,
-        participateTime: record.participate_time,
-        durationDay: record.duration_day,
-        durationHour: record.duration_hour,
-        evidence: record.evidence,
-        auditStatus: record.audit_status,
-        volName: record.vol_name,
-        volId: record.vol_id,
-        volType: record.vol_type
-      }));
-      console.log(res.data);
-      console.log(HistoryRecord.value);
+    const userid = parseToInt(value);
+    try {
+        const res = await get_record({ user_id: userid });
+        console.log(res.status);
+        if (res.status === 200) {
+            console.log("success");
+            HistoryRecord.value = res.data.data;
+            console.log(res.data);
+            console.log(HistoryRecord.value);
+        }
     }
-  } catch (err) {
-    console.log("fail");
-    console.log(err);
-  }
+    catch (err) {
+        console.log("fail");
+        console.log(err);
+    }
+
 }
+
 
 //删除记录
 function deleteRecord(nowvol_id) {
