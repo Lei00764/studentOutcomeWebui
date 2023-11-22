@@ -61,38 +61,35 @@
     </div>
 
     <!-- 查看历史填报记录 暂时未做分页处理 -->
+
     <el-space wrap>
-    <el-card v-for="record in HistoryRecord" :key="record.vol_id" class="box-card" style="width: 250px">
-      <template #header>
-        <div class="card-header">
-          <div class="header-left">
-            <span>{{ record.vol_name }}</span>
-          </div>
-          <div class="header-right">
-            <el-button class="button" text @click="editRecord(record.vol_id)" type="primary">修改</el-button>
-            <el-button class="button" text @click="deleteRecord(record.vol_id)" type="danger">删除</el-button>
-          </div>
-        </div>
-      </template>
-      <div class="text item">
-        <p><strong>参加时间: </strong>{{ record.participate_time }}</p>
-        <p><strong>持续时间: </strong>
-          <span v-if="record.duration_day !== 0">{{ record.duration_day }} 天 </span>
-          <span v-if="record.duration_hour !== 0">{{ record.duration_hour }} 小时</span>
-        </p>
-        <p><strong>志愿类型: </strong>
-          <span v-if="record.vol_type === 'null'" style="color: gray;">未审核</span>
-          <span v-else style="color: cyan;">{{ record.vol_type }}</span>
-        </p>
-        <p><strong>审核状态: </strong>
-          <span v-if="record.audit_status === false" style="color: red;">审核失败</span>
-          <span v-else-if="record.audit_status === true" style="color: green;">审核通过</span>
-          <span v-else style="color: gray;">未审核</span>
-        </p>
-        <img :src="record.evidence" alt="证据图片">
+  <el-card v-for="record in HistoryRecord" :key="record.vol_id" class="box-card" style="width: 250px">
+    <template #header>
+      <div class="card-header">
+        <span>{{ record.vol_name }}</span>
+        <el-button class="button" text @click="editRecord(record.vol_id)" type="primary">修改</el-button> <!-- 修改按钮在前，使用 primary 类型 -->
+        <el-button class="button" text @click="deleteRecord(record.vol_id)" type="danger">删除</el-button> <!-- 删除按钮在后，使用 danger 类型 -->
       </div>
-    </el-card>
-  </el-space>
+    </template>
+    <div class="text item">
+      <p><strong>参加时间: </strong>{{ record.participate_time }}</p>
+      <p><strong>持续时间: </strong>
+        <span v-if="record.duration_day !== 0">{{ record.duration_day }} 天 </span>
+        <span v-if="record.duration_hour !== 0">{{ record.duration_hour }} 小时</span>
+      </p>
+      <p><strong>志愿类型: </strong>
+        <span v-if="record.vol_type === 'null'" style="color: gray;">未审核</span>
+        <span v-else style="color: cyan;">{{ record.vol_type }}</span>
+      </p>
+      <p><strong>审核状态: </strong>
+        <span v-if="record.audit_status === false" style="color: red;">审核失败</span>
+        <span v-else-if="record.audit_status === true" style="color: green;">审核通过</span>
+        <span v-else style="color: gray;">未审核</span>
+      </p>
+      <img :src="record.evidence" alt="证据图片">
+    </div>
+  </el-card>
+</el-space>
     <el-col>
             <p class="sectionTitle">操作日志</p>
         </el-col>

@@ -1,12 +1,12 @@
 <template>
      <div class="viewWrapper">
-        <h1 class="pageTitle">社会活动填报</h1>
+        <h1 class="pageTitle">志愿服务填报</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以新建、修改社会活动信息。
+            帮助：在本页面中，您可以新建、修改志愿填报信息。
         </div>
     <el-form :model="volunteers" label-width="120px" status-icon :rules="rules">
 
-        <el-form-item label="社会活动名称" style="width: 500px" prop="name">
+        <el-form-item label="志愿服务名称" style="width: 500px" prop="name">
             <el-input v-model="volunteers.VOL_name" />
         </el-form-item>
 
@@ -61,6 +61,7 @@
     </div>
 
     <!-- 查看历史填报记录 暂时未做分页处理 -->
+
     <el-space wrap>
     <el-card v-for="record in HistoryRecord" :key="record.vol_id" class="box-card" style="width: 250px">
       <template #header>
@@ -109,11 +110,10 @@
 </template>
 
 <script setup>
-
 import { computed, onMounted, ref } from 'vue';
 import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue';
 import axios from "axios";
-import { submit_create, get_record, delete_record } from '../../src/api/socialWork-api';
+import { submit_create, get_record, delete_record } from '../../src/api/volunteers-api';
 
 //表单校验
 const rules = ref({
@@ -228,6 +228,12 @@ async function getHistoryRecord(value) {
     console.log("fail");
     console.log(err);
   }
+}
+//修改记录
+function editRecord(volId) {
+  
+    this.$router.push({ name:'changeVolunteers'})
+
 }
 
 //删除记录

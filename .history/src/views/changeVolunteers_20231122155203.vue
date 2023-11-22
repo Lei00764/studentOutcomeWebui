@@ -1,0 +1,81 @@
+<template>
+  <div>
+    <h1>修改志愿活动</h1>
+    <el-form ref="form" :model="formData" label-width="120px" style="max-width: 600px; margin-bottom: 20px;">
+      <el-form-item label="志愿者姓名">
+        <el-input v-model="formData.vol_name"></el-input>
+      </el-form-item>
+      <el-form-item label="志愿者类型">
+        <el-input v-model="formData.vol_type"></el-input>
+      </el-form-item>
+      <el-form-item label="参与时间">
+        <el-input v-model="formData.participate_time"></el-input>
+      </el-form-item>
+      <el-form-item label="时长（天）">
+        <el-input v-model="formData.duration_day"></el-input>
+      </el-form-item>
+      <el-form-item label="时长（小时）">
+        <el-input v-model="formData.duration_hour"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="updateVolunteer">保存</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      formData: {
+        vol_name: '',
+        vol_type: '',
+        participate_time: '',
+        duration_day: 0,
+        duration_hour: 0,
+        audit_status: false,
+      },
+    };
+  },
+  mounted() {
+    this.fetchVolunteer();
+  },
+  methods: {
+    fetchVolunteer() {
+      // 根据需要获取特定志愿活动的信息
+      const volunteerId = 0; // 请将其替换为实际的志愿活动ID
+      axios.get(`http://127.0.0.1:4523/m2/3206870-0-default/118198285/${volunteerId}`) // 请替换为实际的 API 接口地址
+        .then(response => {
+          const volunteer = response.data.data;
+          this.formData = {
+            vol_name: volunteer.vol_name,
+            vol_type: volunteer.vol_type,
+            participate_time: volunteer.participate_time,
+            duration_day: volunteer.duration_day,
+            duration_hour: volunteer.duration_hour,
+            audit_status: volunteer.audit_status,
+          };
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    updateVolunteer() {
+      // 根据需要执行更新志愿活动的逻辑
+      const volunteerId = 0; // 请将其替换为实际的志愿活动ID
+      axios.put(`http://127.0.0.1:4523/m2/3206870-0-default/118198285/${volunteerId}`, this.formData) // 请替换为实际的 API 接口地址
+        .then(response => {
+          console.log('志愿活动已成功更新');
+          // 执行成功后的操作，例如跳转到列表页面或显示成功消息
+        })
+        .catch(error => {
+          console.error(error);
+          // 处理更新失败的情况，例如显示错误消息
+        });
+    },
+  },
+};
+</script>

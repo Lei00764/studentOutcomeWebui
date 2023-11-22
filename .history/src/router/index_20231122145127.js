@@ -70,8 +70,8 @@ const router = createRouter({
                 },
                 {
                     path: "changeVolunteers",
-                    name: "changeVolunteers",
-                    component: ()=>import("@/views/changeVolunteers.vue"),
+                    name: "testview2",
+                    component: ()=>import("@/views/TestView2.vue"),
                 },
             ]
         },

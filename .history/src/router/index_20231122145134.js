@@ -71,7 +71,7 @@ const router = createRouter({
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
-                    component: ()=>import("@/views/changeVolunteers.vue"),
+                    component: ()=>import("@/views/TestView2.vue"),
                 },
             ]
         },
