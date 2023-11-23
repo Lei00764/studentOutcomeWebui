@@ -3,7 +3,7 @@
 import LinkButtonWithIcon from "@/components/LinkButtonWithIcon.vue";
 import {changeTheme} from "@/assets/changeTheme";
 import router from "@/router";
-import axios from "axios";
+import loginApi from "@/api/login";
 import {onBeforeMount, onMounted, reactive, ref, watch} from "vue";
 import UserInfoCard from "@/components/UserInfoCard.vue";
 import globalData from "@/global/global"
@@ -18,7 +18,7 @@ const menuItemClick = (ke) => {
 }
 
 const exitButtonClicked = async ()=>{
-    await axios.get("/api/StudentInfo/logout")
+    await loginApi.s/end([A-Z])/end1/gogout("/api/StudentInfo/logout")
     window.location.href ="/";
 }
 
@@ -58,7 +58,7 @@ const isLogin = ref(false);
 const loadComplete = ref(true);
 const gotUserInfo = ref(false)
 
-axios.get("/api/StudentInfo/info").then(response => {
+loginApi.getUserInfo().then(response => {
     let responseObj = response.json
     isLogin.value = true;
     gotUserInfo.value = true
@@ -66,9 +66,9 @@ axios.get("/api/StudentInfo/info").then(response => {
     menus.v = [
         {"title":"首页","icon":"fi-rr-home","path":"/"},
         {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
+        {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
+        {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
         {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
-        {"title":"志愿服务","icon":"fi-rr-key" ,"path":"/Volunteers"},
-        {"title":"社会活动","icon":"fi-rr-key" ,"path":"/socialWork"},
     ]
     loadComplete.value = false;
     // 等菜单卸载完了再改回来
