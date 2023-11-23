@@ -11,7 +11,7 @@ const router = createRouter({
                 {
                     path: "",
                     name: "loginView",
-                    component: ()=>import("@/views/LoginView.vue"),
+                    component: ()=>import("@/views/miscellany/LoginView.vue"),
                 },
 
             ]
@@ -24,12 +24,12 @@ const router = createRouter({
                 {
                     path: "",
                     name: "homeView",
-                    component: ()=>import("@/views/HomeView.vue"),
+                    component: ()=>import("@/views/miscellany/HomeView.vue"),
                 },
                 {
                     path: "user",
                     name: "userView",
-                    component: ()=>import("@/views/UserView.vue"),
+                    component: ()=>import("@/views/miscellany/UserView.vue"),
                 },
                 {
                     path: "competition",
@@ -38,40 +38,40 @@ const router = createRouter({
                         {
                             path: "",
                             name: "competitionHomeView",
-                            component: ()=>import("@/views/CompetitionView.vue"),
+                            component: ()=>import("@/views/competition/CompetitionView.vue"),
                         },
                         {
                             path: "edit/:teamId",
                             name: "teamEdit",
-                            component: () => import("@/views/CompetitionEditView.vue")
+                            component: () => import("@/views/competition/CompetitionEditView.vue")
                         },
                         {
                             path: "new",
                             name: "teamNew",
-                            component: () => import("@/views/CompetitionEditView.vue")
+                            component: () => import("@/views/competition/CompetitionEditView.vue")
                         },
                         {
                             path: "view/:teamId",
                             name: "teamView",
-                            component: () => import("@/views/CompetitionViewView.vue")
+                            component: () => import("@/views/competition/CompetitionViewView.vue")
                         }
 
                     ]
                 },
                 {
                     path: "volunteers",
-                    name: "volunteersview",
-                    component: ()=>import("@/views/VolunteersView.vue"),
+                    name: "volunteersView",
+                    component: ()=>import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
                     path: "socialWork",
                     name: "socialWork",
-                    component: ()=>import("@/views/socialWork.vue"),
+                    component: ()=>import("@/views/social/socialWork.vue"),
                 },
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
-                    component: ()=>import("@/views/changeVolunteers.vue"),
+                    component: ()=>import("@/views/volunteer/changeVolunteers.vue"),
                 },
             ]
         },
