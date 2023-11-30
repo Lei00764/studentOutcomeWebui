@@ -18,7 +18,7 @@ const menuItemClick = (ke) => {
 }
 
 const exitButtonClicked = async ()=>{
-    await loginApi.s/end([A-Z])/end1/gogout("/api/StudentInfo/logout")
+    await loginApi.logout();
     window.location.href ="/";
 }
 
