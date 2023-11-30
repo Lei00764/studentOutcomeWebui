@@ -1,10 +1,10 @@
 import request from "@/utils/request"
 import axios from "axios";
 
-const login = (studentId, password) => {
+const login = (username, password) => {
     return request.post("/api/StudentInfo/login",{
-        stu_id: studentId,
-        user_password: password,
+        username: username,
+        password: password,
     })
 }
 
