@@ -36,14 +36,20 @@ service.interceptors.response.use(function (response) {
                         ElMessage.error("参数错误")
                         return;
                     case 403:
-                        ElMessage.error("拒绝访问")
+                        if(response.data.msg)
+                            ElMessage.error(response.data.msg)
+                        else
+                            ElMessage.error("拒绝访问")
                         return;
                     case 404:
                         router.replace("/error")
                         return;
                     case 500:
-                        router.replace("服务器错误");
+                        ElMessage.error("服务器错误");
                         console.error(response.data)
+                        return;
+                    case 550:
+                        ElMessage.error("接口未实现");
                         return;
                 }
                 ElMessage.error((prefix ? prefix : "错误代码") + "：" + response.data.code)
