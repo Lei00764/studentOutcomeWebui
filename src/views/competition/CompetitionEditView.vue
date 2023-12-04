@@ -114,12 +114,7 @@ const loadTerms = () => {
         prizes.value = []
         return
     }
-    for(let t of competitions.value){
-        if(t.id === queryForm.competitionId){
-            competitionType.value = t.type_name
-            organizer.value = t.organizer
-        }
-    }
+
 
     api.editApi.queryTerm(queryForm.competitionId).then(res => {
         terms.value = res.json.terms
@@ -140,6 +135,9 @@ const onTermSelected = () => {
     for(let t of terms.value){
         if(t.id === queryForm.termId){
             termLevelName.value = t.level_name;
+            competitionType.value = t.type_name
+            organizer.value = t.organizer
+
         }
     }
     api.editApi.queryPrizeOfTerm(queryForm.termId).then(res => {
@@ -429,7 +427,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in competitions"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.competition_name"
                             :value="item.id"
                         />
                     </el-select>
@@ -447,7 +445,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in terms"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.term_name"
                             :value="item.id"
                         />
                     </el-select>
@@ -465,7 +463,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in prizes"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.prize_name"
                             :value="item.id"
                         />
                     </el-select>

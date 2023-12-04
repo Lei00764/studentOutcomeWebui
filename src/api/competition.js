@@ -2,19 +2,19 @@ import request from "@/utils/request"
 
 const editApi = {
     getTeamInfo: (teamId) => {
-        return request.post("/api/Competition/getTeamInfo",{team_id: teamId})
+        return request.post("/api/competition/getTeamInfo",{team_id: teamId})
     },
     queryCompetition: (keyword) => {
-        return request.post("/api/Competition/queryCompetition", {keyword: keyword})
+        return request.post("/api/competition/queryCompetition", {keyword: keyword})
     },
     queryTerm: (competitionId) => {
-        return request.post("/api/Competition/queryTerm", {competition_id: competitionId})
+        return request.post("/api/competition/queryTerm", {competition_id: competitionId})
     },
     queryPrizeOfTerm: (termId) => {
-        return request.post("/api/Competition/termPrize", {term_id: termId})
+        return request.post("/api/competition/termPrize", {term_id: termId})
     },
     createNewTeam: (competitionId, termId, prizeId, awardDate, desc) => {
-        return request.post("/api/Competition/newTeam", {
+        return request.post("/api/competition/newTeam", {
             competition_id: competitionId,
             term_id: termId,
             prize_id: prizeId,
@@ -28,17 +28,17 @@ const editApi = {
      * @param teammates: 修改后的队员贡献排序，如果没修改设置为null
      */
     editTeam: (teamId, basicInfo, teammates) => {
-        return request.post("/api/Competition/editTeam",{
+        return request.post("/api/competition/editTeam",{
             team_id: teamId,
             info: basicInfo,
             teammates: teammates
         })
     },
     clearCertImage: (teamId) => {
-        return request.post("/api/Competition/imgClear", {team_id: teamId})
+        return request.post("/api/competition/imgClear", {team_id: teamId})
     },
     uploadImage: (teamId, imgBlob) => {
-        return request.post("/api/Competition/imgUpload", {
+        return request.post("/api/competition/imgUpload", {
             team_id: teamId,
             image: imgBlob
         }, {
@@ -48,12 +48,12 @@ const editApi = {
         })
     },
     createInvitationCode: (teamId) => {
-        return request.post("/api/Competition/createInvitationCode",{
+        return request.post("/api/competition/createInvitationCode",{
             team_id: teamId,
         })
     },
     submitToReview: (teamId) => {
-        return request.post("/api/Competition/submitToReview",{
+        return request.post("/api/competition/submitToReview",{
             team_id: teamId,
         })
     },
@@ -63,7 +63,7 @@ const editApi = {
      * @param {boolean} isVerified: 是否确认排名
      */
     setRandVerification: (teamId, isVerified) => {
-        return request.post("/api/Competition/setVerification",{
+        return request.post("/api/competition/setVerification",{
             team_id: teamId,
             verified: isVerified ? 1 : 0
         })
@@ -81,7 +81,7 @@ const viewApi = {
      * @return {Promise}
      */
     getTeamPageWithKeyword: (field, keyword, precise, pageNo) => {
-        return request.post("/api/Competition/getTeam",{
+        return request.post("/api/competition/getTeam",{
             field: field,
             keyword: keyword,
             precise: precise,
@@ -89,17 +89,17 @@ const viewApi = {
         })
     },
     useInvitationCode: (invitationCode) => {
-        return request.post("/api/Competition/invitationCode",{
+        return request.post("/api/competition/invitationCode",{
             invitation_code: invitationCode
         })
     },
     leaveTeam: (teamId) => {
-        return request.post("/api/Competition/leaveTeam",{
+        return request.post("/api/competition/leaveTeam",{
             team_id: teamId,
         })
     },
     withdrawSubmittedTeam: (teamId) => {
-        return request.post("/api/Competition/withdrawTeam",{
+        return request.post("/api/competition/withdrawTeam",{
             team_id: teamId,
         })
     }
