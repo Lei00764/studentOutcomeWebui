@@ -191,6 +191,11 @@ const onSaveButtonClicked = ()=>{
             reloadPage()
         }).catch(error => {
             if(error.network) return
+            switch (error.errorCode) {
+                case 630:
+                    ElMessage.error("您已经填报了本届比赛的参赛信息，无需重复填报。")
+                    return;
+            }
             error.defaultHandler()
         })
     }else if(pageMode === "teamEdit"){
