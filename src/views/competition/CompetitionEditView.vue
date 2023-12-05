@@ -114,12 +114,7 @@ const loadTerms = () => {
         prizes.value = []
         return
     }
-    for(let t of competitions.value){
-        if(t.id === queryForm.competitionId){
-            competitionType.value = t.type_name
-            organizer.value = t.organizer
-        }
-    }
+
 
     api.editApi.queryTerm(queryForm.competitionId).then(res => {
         terms.value = res.json.terms
@@ -140,6 +135,9 @@ const onTermSelected = () => {
     for(let t of terms.value){
         if(t.id === queryForm.termId){
             termLevelName.value = t.level_name;
+            competitionType.value = t.type_name
+            organizer.value = t.organizer
+
         }
     }
     api.editApi.queryPrizeOfTerm(queryForm.termId).then(res => {
@@ -193,6 +191,11 @@ const onSaveButtonClicked = ()=>{
             reloadPage()
         }).catch(error => {
             if(error.network) return
+            switch (error.errorCode) {
+                case 630:
+                    ElMessage.error("您已经填报了本届比赛的参赛信息，无需重复填报。")
+                    return;
+            }
             error.defaultHandler()
         })
     }else if(pageMode === "teamEdit"){
@@ -429,7 +432,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in competitions"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.competition_name"
                             :value="item.id"
                         />
                     </el-select>
@@ -447,7 +450,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in terms"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.term_name"
                             :value="item.id"
                         />
                     </el-select>
@@ -465,7 +468,7 @@ const cancelVerified = (row) => {
                         <el-option
                             v-for="item in prizes"
                             :key="item.id"
-                            :label="item.name"
+                            :label="item.prize_name"
                             :value="item.id"
                         />
                     </el-select>

@@ -216,7 +216,7 @@ const withdrawTeam = (selectedTeamId) => {
                 >
                     <el-option label="无" value="" />
                     <el-option label="ID" value="team_id"/>
-                    <el-option v-for="f in fields" :label="f.name" :value="f.field" />
+                    <el-option label="竞赛名称" value="competition_name"/>
                     <el-option label="状态" value="status_code"/>
                 </el-select>
             </el-form-item>
