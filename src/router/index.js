@@ -61,7 +61,7 @@ const router = createRouter({
                 {
                     path: "volunteers",
                     name: "volunteersView",
-                    component: ()=>import("@/views/volunteer/VolunteersView.vue"),
+                    component: ()=>import("@/views/volunteer/reviewVolunteers.vue"),
                 },
                 {
                     path: "socialWork",
