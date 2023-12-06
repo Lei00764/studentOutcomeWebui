@@ -5,7 +5,7 @@
             帮助：在本页面中，您可以审核填报信息。
         </div>
 
-        <el-table :data="auditData" style="width: 100%">
+        <el-table :data="auditData" style="width: 100%" @row-click="handleRowClick">
             <el-table-column prop="volName" label="名称"></el-table-column>
             <el-table-column prop="auditStatus" label="状态"></el-table-column>
             <el-table-column label="操作">
@@ -13,6 +13,15 @@
                 <el-button type="danger" size="small" @click="reject(scope.row.userId)">拒绝</el-button>
             </el-table-column>
         </el-table>
+    </div>
+    <div class="card">
+        <el-card title="相关信息" v-show="showDialog">
+            <!-- 在卡片中展示相关信息 -->
+            <p>名称: {{ selectedRow ? selectedRow.volName : '' }}</p>
+            <p>状态: {{ selectedRow ? selectedRow.auditStatus : '' }}</p>
+            <el-button type="danger" size="small" @click="scape()">退出</el-button>
+            <!-- 其他信息... -->
+        </el-card>
     </div>
 </template>
   
@@ -24,6 +33,8 @@ export default {
         return {
             auditData: [],
             userid: 123,
+            showDialog: false, // 控制卡片显示与隐藏的数据属性
+            selectedRow: null // 存储选中的行数据
         };
     },
     methods: {
@@ -36,7 +47,27 @@ export default {
             }
             return parsedValue;
         },
-
+        handleRowClick(row) {
+            this.selectedRow = row;
+            this.showDialog = true;
+            this.$nextTick(() => {
+                // 在下一次 DOM 更新后访问 selectedRow 的属性
+                console.log(this.selectedRow.volName);
+            });
+        },
+        approve(userId) {
+            // 通过按钮点击事件处理逻辑
+            // 可以使用 userId 进行处理
+            // ...
+        },
+        reject(userId) {
+            // 拒绝按钮点击事件处理逻辑
+            // 可以使用 userId 进行处理
+            // ...
+        },
+        scape() {
+            this.showDialog = false;
+        },
         async getHistoryRecord(value) {
             const userid = this.parseToInt(value);
             try {
@@ -55,14 +86,6 @@ export default {
                 console.log("fail");
                 console.log(err);
             }
-        },
-        approve(userId) {
-            // 处理通过操作
-            console.log('通过审核，用户ID:', userId);
-        },
-        reject(userId) {
-            // 处理拒绝操作
-            console.log('拒绝审核，用户ID:', userId);
         },
     },
     created() {
@@ -90,5 +113,14 @@ export default {
     box-shadow: 0 3px 3px rgba(36, 37, 38, 0.05);
     border-radius: 3px;
     padding: 20px;
+}
+
+.card {
+    width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
