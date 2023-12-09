@@ -109,158 +109,127 @@
 </div>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from 'vue';
+
+<script>
 import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue';
 import api from '@/api/volunteers';
-import { useRouter } from 'vue-router';
-//表单校验
-const router = useRouter();
-const rules = ref({
-    name: [
-        {required: true, message: '名字不能为空', trigger: 'blur'},
-        // {max: 30, message: '名称最长不能超过30个字', trigger: 'blur'},
-    ],
+export default {
 
-    time: [
-        {required: true, message: '时间不能为空', trigger: 'blur'},
-    ],
+    data() {
+        return {
+            rules: {
+                name: [
+                    { required: true, message: '名字不能为空', trigger: 'blur' },
+                    // { max: 30, message: '名称最长不能超过30个字', trigger: 'blur' },
+                ],
+                time: [
+                    { required: true, message: '时间不能为空', trigger: 'blur' },
+                ],
+                duration: [
+                    { required: true, message: '时长不能为空', trigger: 'blur' },
+                ],
+            },
+            volunteers: {
+                VOL_name: '',
+                participate_time: '',
+                duration_day: '',
+                duration_hour: '',
+            },
+            operationLogs: [],
+            fileList: [],
+            evidenceCheck: {
+                dialogImageUrl: '',
+                dialogVisible: false,
+                disabled: false,
+            },
+            HistoryRecord: [],
+        };
+    },
+    methods: {
+        onSubmit() {
+            console.log('submit!');
+            console.log(this.evidenceCheck.dialogImageUrl);
 
-    duration: [
-        {required: true, message: "时长不能为空", trigger: 'blur'},
-    ],
+            api.submitCreate({
+                user_id: 2,
+                VOL_name: this.volunteers.VOL_name,
+                participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
+                duration_day: this.parseToInt(this.volunteers.duration_day),
+                duration_hour: this.parseToInt(this.volunteers.duration_hour),
+                evidence: this.evidenceCheck.dialogImageUrl,
+            })
+                .then((res) => {
+                    console.log(res.status);
+                })
+                .catch((error) => {
+                    console.error('Error enrolling in training:', error);
+                });
 
-})
-const operationLogs = ref([])
-
-// 佐证材料部分的数据结构
-const fileList = ref([]);
-
-// Do not use the same name with ref
-//使用的时候要加ref()
-const volunteers = ref({
-    VOL_name: '',
-    participate_time: '',
-    duration_day: '',
-    duration_hour: '',
-});
-
-
-
-// 上传数据给后端
-const onSubmit = () => {
-    console.log('submit!');
-    // 等待修改为合适的user_id
-    console.log(evidenceCheck.dialogImageUrl);
-
-    api.submitCreate({
-        user_id: 2,
-        VOL_name: volunteers.value.VOL_name,
-        participate_time: new Date(volunteers.value.participate_time).toISOString().split('T')[0],
-        // participate_time: dateString,
-        duration_day: parseToInt(volunteers.value.duration_day),
-        duration_hour: parseToInt(volunteers.value.duration_hour),
-        evidence: evidenceCheck.dialogImageUrl,
-    })
-        .then((res) => {
-            console.log(res.status);
-
-        })
-        .catch((error) => {
-            console.error('Error enrolling in training:', error);
-        });
-
-    location.reload();
+            location.reload();
+        },
+        handleRemove(uploadFile, uploadFiles) {
+            console.log(uploadFile, uploadFiles);
+        },
+        handlePictureCardPreview(uploadFile) {
+            this.evidenceCheck.dialogImageUrl = uploadFile.url;
+            this.evidenceCheck.dialogVisible = true;
+        },
+        parseToInt(value) {
+            const parsedValue = parseInt(value, 10);
+            if (isNaN(parsedValue)) {
+                return 0;
+            }
+            return parsedValue;
+        },
+        async getHistoryRecord(value) {
+            const userid = this.parseToInt(value);
+            try {
+                const res = await api.getRecord({ user_id: userid });
+                console.log(res.status);
+                if (res.status === 200) {
+                    console.log('success');
+                    this.HistoryRecord = res.data.data.map((record) => ({
+                        participateTime: record.participate_time,
+                        durationDay: record.duration_day,
+                        durationHour: record.duration_hour,
+                        evidence: record.evidence,
+                        auditStatus: record.audit_status,
+                        volName: record.vol_name,
+                        vol_detiles: record.vol_detiles,
+                        vol_id:record.vol_id,
+                    }));
+                    //console.log(this.HistoryRecord);
+                }
+            } catch (err) {
+                console.log('fail');
+                console.log(err);
+            }
+        },
+        editRecord(volId) {
+            console.log(volId);
+            this.$router.push({ name: 'changeVolunteers' });
+        },
+        deleteRecord(nowvol_id) {
+            console.log('delete record');
+            const vol_id = this.parseToInt(nowvol_id);
+            const res = delete_record({ VOL_id: vol_id });
+            console.log(res);
+            console.log(res.code);
+            if (res.code === 200) {
+                const index = this.HistoryRecord.findIndex((record) => record.vol_id === vol_id);
+                console.log(index);
+                if (index !== -1) {
+                    this.HistoryRecord.splice(index, 1);
+                }
+            }
+        },
+    },
+    mounted() {
+        this.getHistoryRecord(2);
+    },
 };
 
-// 佐证材料预览的数据结构
-const evidenceCheck = {
-    dialogImageUrl: '',
-    dialogVisible: false,
-    disabled: false,
-};
-
-// 佐证材料的处理函数
-const handleRemove = (uploadFile, uploadFiles) => {
-    console.log(uploadFile, uploadFiles);
-};
-
-const handlePictureCardPreview = (uploadFile) => {
-    evidenceCheck.dialogImageUrl = uploadFile.url;
-    evidenceCheck.dialogVisible = true;
-};
-
-// 上传时把字符串转为整数
-function parseToInt(value) {
-    const parsedValue = parseInt(value, 10);
-    if (isNaN(parsedValue)) {
-        // Handle the case where parsing failed, e.g., return a default value or throw an error.
-        // For simplicity, let's return 0 as the default value.
-        return 0;
-    }
-    return parsedValue;
-}
-
-//接收填写记录
-const HistoryRecord = ref([]);
-
-async function getHistoryRecord(value) {
-  const userid = parseToInt(value);
-  try {
-    const res = await api.getRecord({ user_id: userid });
-    console.log(res.status);
-    if (res.status === 200) {
-      console.log("success");
-      HistoryRecord.value = res.data.data.map(record => ({
-        userId: record.user_id,
-        participateTime: record.participate_time,
-        durationDay: record.duration_day,
-        durationHour: record.duration_hour,
-        evidence: record.evidence,
-        auditStatus: record.audit_status,
-        volName: record.vol_name,
-        volId: record.vol_id,
-        volType: record.vol_type
-      }));
-      console.log(res.data);
-      console.log(HistoryRecord.value);
-    }
-  } catch (err) {
-    console.log("fail");
-    console.log(err);
-  }
-}
-//修改记录
-function editRecord(volId) {
-    console.log(volId);
-    router.push({ name: 'changeVolunteers' });
-}
-
-//删除记录
-function deleteRecord(nowvol_id) {
-    console.log("delete record");
-    const vol_id = parseToInt(nowvol_id);
-    const res = delete_record({ VOL_id: vol_id });
-    console.log(res);
-    console.log(res.code);
-    //location.reload(); // 重新加载整个页面
-    if (res.code === 200) {
-        // 找到要删除的记录在 HistoryRecord 中的索引
-        const index = HistoryRecord.findIndex(record => record.vol_id === vol_id);
-        consle.log(index)
-        if (index !== -1) {
-            // 从 HistoryRecord 中删除记录
-            this.HistoryRecord.splice(index, 1);
-        }
-    }
-}
-
-onMounted(() => {
-    //?等待改为当前user_id
-    getHistoryRecord(2);
-});
-
-
+</script>
 
 </script>
 
