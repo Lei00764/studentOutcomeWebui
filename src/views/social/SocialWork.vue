@@ -4,10 +4,10 @@
         <div class="helpText">
             帮助：在本页面中，您可以新建、修改社会活动信息。
         </div>
-        <el-form :model="volunteers" label-width="120px" status-icon :rules="rules">
+        <el-form :model="social" label-width="120px" status-icon :rules="rules">
 
             <el-form-item label="社会活动名称" style="width: 500px" prop="name">
-                <el-input v-model="volunteers.VOL_name" />
+                <el-input v-model="social.VOL_name" />
             </el-form-item>
 
 
@@ -16,19 +16,19 @@
                 <div class="demo-date-picker">
                     <div class="block">
                         <!-- <span class="demonstration">Default</span> -->
-                        <el-date-picker v-model="volunteers.participate_time" type="date" placeholder="请选择日期" />
+                        <el-date-picker v-model="social.participate_time" type="date" placeholder="请选择日期" />
                     </div>
                 </div>
             </el-form-item>
 
             <el-form-item label="时长" class="duration-input" prop="duration">
-                <el-input v-model="volunteers.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
+                <el-input v-model="social.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
 
-                <el-input v-model="volunteers.duration_hour" placeholder="小时" clearable />
+                <el-input v-model="social.duration_hour" placeholder="小时" clearable />
             </el-form-item>
             <!--详细描述-->
             <el-form-item label="详细描述" style="width: 1000px" prop="detile">
-                <el-input type="textarea" v-model="volunteers.Vol_detile" :rows="4" />
+                <el-input type="textarea" v-model="social.social_detile" :rows="4" />
             </el-form-item>
             <!-- 上传佐证材料(图片) el-upload中的换行的属性用于拖拽上传-->
             <!-- action="#"  -->
@@ -83,10 +83,6 @@
                         <span v-if="record.durationDay !== 0">{{ record.durationDay }} 天 </span>
                         <span v-if="record.durationHour !== 0">{{ record.durationHour }} 小时</span>
                     </p>
-                    <p><strong>志愿类型: </strong>
-                        <span v-if="record.volType === 'null'" style="color: gray;">未审核</span>
-                        <span v-else style="color: cyan;">{{ record.volType }}</span>
-                    </p>
                     <p><strong>审核状态: </strong>
                         <span v-if="record.auditStatus === false" style="color: red;">审核失败</span>
                         <span v-else-if="record.auditStatus === true" style="color: green;">审核通过</span>
@@ -130,12 +126,12 @@ export default {
                 ],
             },
             fileList: [],
-            volunteers: {
-                VOL_name: '',
+            social: {
+                social_name: '',
                 participate_time: '',
                 duration_day: '',
                 duration_hour: '',
-                Vol_detile: ''
+                social_detile: ''
             },
             evidencecheck: {
                 dialogImageUrl: '',
@@ -153,10 +149,10 @@ export default {
 
             api.submitCreate({
                 user_id: 2,
-                VOL_name: this.volunteers.VOL_name,
-                participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
-                duration_day: this.parseToInt(this.volunteers.duration_day),
-                duration_hour: this.parseToInt(this.volunteers.duration_hour),
+                social_name: this.social.social_name,
+                participate_time: new Date(this.social.participate_time).toISOString().split('T')[0],
+                duration_day: this.parseToInt(this.social.duration_day),
+                duration_hour: this.parseToInt(this.social.duration_hour),
                 evidence: this.evidencecheck.dialogImageUrl,
             })
                 .then((res) => {
@@ -194,9 +190,9 @@ export default {
                         durationHour: record.duration_hour,
                         evidence: record.evidence,
                         auditStatus: record.audit_status,
-                        volName: record.vol_name,
-                        volId: record.vol_id,
-                        voldetile: record.vol_detiles,
+                        socialName: record.social_name,
+                        socialId: record.social_id,
+                        voldetile: record.social_detiles,
                     }));
                 }
             } catch (err) {
