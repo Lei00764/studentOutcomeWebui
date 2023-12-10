@@ -68,6 +68,7 @@ loginApi.getUserInfo().then(response => {
         {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
         {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
         {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
+        {"title":"审核参赛信息","icon":"fi-rr-trophy", "path":"/competitionCheck/check/1"},
         {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
     ]
     loadComplete.value = false;

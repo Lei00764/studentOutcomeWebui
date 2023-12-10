@@ -106,7 +106,24 @@ const viewApi = {
     }
 }
 
+const checkApi = {
+    getNextCheckId: (currentTeamId, checkSessionId) => {
+        return request.post("/api/competition/check/getNext", {
+            current_team_id: currentTeamId,
+            check_session_id: checkSessionId
+        })
+    },
+    changeVerifyStatus: (teamId, statusId, checkMessage) => {
+        return request.post("/api/competition/check/changeVerifyStatus",{
+            team_id: teamId,
+            status: statusId,
+            msg: checkMessage
+        })
+    }
+}
+
 export default {
     editApi,
-    viewApi
+    viewApi,
+    checkApi
 }

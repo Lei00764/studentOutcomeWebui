@@ -3,38 +3,55 @@ import {useRoute} from "vue-router";
 import router from "@/router";
 import {computed, reactive, ref, watch, h} from "vue";
 import {ElMessage, ElMessageBox, genFileId} from "element-plus";
-import globalData from "@/global/global"
+import checkSessionUtil from "@/utils/checkSession"
 import api from "@/api/competition";
 
 const routerWatchable = useRoute()
 
-const actionText = computed(()=>{
-    if(router.currentRoute.value.name === "teamNew")
-        return "新建"
-    if(router.currentRoute.value.name === "teamEdit")
-        return "编辑"
-    if(router.currentRoute.value.name === "teamView")
-        return "查看"
-})
-
-let pageMode = router.currentRoute.value.name;
 let teamId = 0;
 
 if(router.currentRoute.value.params?.teamId)
     teamId = parseInt(router.currentRoute.value.params?.teamId)
 
 watch(routerWatchable,(old,newRoute)=>{
-    if(pageMode==="teamNew")
-        return;
     if(router.currentRoute.value.params?.teamId)
         teamId = parseInt(router.currentRoute.value.params?.teamId)
     if(typeof(newRoute.params.teamId) !== "undefined")
         reloadPage();
 })
 
+
+const competitions = ref([])
+const terms = ref([])
+const prizes = ref([])
+const loading = ref(false)
+const certificationPictures = ref([])
+const operationLogs = ref([])
+const teammates = ref([])
+
+const certUrl = ref("")
+const isCertImageChanged = ref(false)
+
+const checkMessage = ref("")
+const teammatesNotChanged = ref(true)
+const infoNotChanged = ref(true)
+
+const queryForm = reactive({
+    competitionId: null,
+    termId: null,
+    prizeId: null,
+    awardDate: null,
+    desc: ""
+})
+
+const organizer = ref()
+const termLevelName = ref()
+const competitionType = ref()
+
+// upload 的图片超过上限，把原来的图片换掉
+const elUploadImg = ref()
+
 const reloadPage = () => {
-    pageMode = router.currentRoute.value.name;
-    if(pageMode === "teamNew") return;
     api.editApi.getTeamInfo(teamId).then(res => {
         let competition = res.json.competition
         competitions.value = [competition]
@@ -43,7 +60,7 @@ const reloadPage = () => {
         organizer.value = competition.organizer;
 
         let term = res.json.term
-        loadTerms()
+        onCompetitionSelected()
         queryForm.termId = term.id
         termLevelName.value = term.level_name
 
@@ -65,33 +82,15 @@ const reloadPage = () => {
         if(error.network) return
         error.defaultHandler()
     })
+    isCertImageChanged.value = false;
+    teammatesNotChanged.value = true;
+    infoNotChanged.value = true;
 }
 reloadPage()
 
-const competitions = ref([])
-const terms = ref([])
-const prizes = ref([])
-const loading = ref(false)
-const certificationPictures = ref([])
-const operationLogs = ref([])
-const teammates = ref([])
 
-const certUrl = ref("")
-const isCertImageChanged = ref(false)
 
-const queryForm = reactive({
-    competitionId: null,
-    termId: null,
-    prizeId: null,
-    awardDate: null,
-    desc: ""
-})
-
-const organizer = ref()
-const termLevelName = ref()
-const competitionType = ref()
-
-const loadCompetitions = (keyword) => {
+const onCompetitionKeywordInput = (keyword) => {
     loading.value = true
     if(keyword === ""){
         return;
@@ -106,7 +105,7 @@ const loadCompetitions = (keyword) => {
     })
 }
 
-const loadTerms = () => {
+const onCompetitionSelected = () => {
     queryForm.termId = null;
     queryForm.prizeId = null;
     if(!queryForm.competitionId){
@@ -150,14 +149,14 @@ const onTermSelected = () => {
     })
 }
 
-// upload 的图片超过上限，把原来的图片换掉
-const elUploadImg = ref()
+
 const swapImg = (newFileList) => {
     elUploadImg.value.clearFiles()
     let file = newFileList[0]
     file.uid = genFileId()
     console.log(file)
     elUploadImg.value.handleStart(file)
+    isCertImageChanged.value = true
 }
 let certFile = null
 const onImgUpload = (file)=> {
@@ -171,34 +170,7 @@ const checkFrom = () => {
 }
 
 const onSaveButtonClicked = ()=>{
-    if(pageMode === "teamNew"){
-        if(!checkFrom()){
-            ElMessage.error("请完成竞赛名称、届别、奖项、获奖日期的填写！")
-            return
-        }
-        api.editApi.createNewTeam(
-            queryForm.competitionId,
-            queryForm.termId,
-            queryForm.prizeId,
-            queryForm.awardDate,
-            queryForm.desc
-        ).then(async res => {
-            teamId = res.json.team_id;
-            console.log(certificationPictures.value)
-            await uploadImg()
-            ElMessage.success("竞赛信息保存成功")
-            await router.replace("/competition/edit/" + res.json.team_id)
-            reloadPage()
-        }).catch(error => {
-            if(error.network) return
-            switch (error.errorCode) {
-                case 630:
-                    ElMessage.error("您已经填报了本届比赛的参赛信息，无需重复填报。")
-                    return;
-            }
-            error.defaultHandler()
-        })
-    }else if(pageMode === "teamEdit"){
+
         // 检查团队设置是否正确
         let postDataTeammates = []
         for(let teammate of teammates.value){
@@ -222,9 +194,8 @@ const onSaveButtonClicked = ()=>{
         ).then(async res => {
             await uploadImg()
             ElMessage.success("竞赛信息保存成功")
-            window.location.reload();
+            reloadPage()
         }).catch(error => {
-            console.log(error)
             if(error.network) return
             switch (error.errorCode){
                 case 614:
@@ -242,7 +213,7 @@ const onSaveButtonClicked = ()=>{
             }
             error.defaultHandler()
         })
-    }
+
 }
 
 // 可以判断需不需要上传图片，不用加其他判断了
@@ -322,23 +293,9 @@ const onClearOriginalCertImage = () => {
     isCertImageChanged.value = true
 }
 
-const onCreateCodeClicked = () => {
-    api.editApi.createInvitationCode(teamId).then(res => {
-        ElMessage.success("已创建邀请码 "+ res.json.code)
-        ElMessageBox.alert(h('p', null, [
-            h('span', null, "已创建邀请码: "),
-            h('span', {style:'color : var(--el-color-primary);'}, res.json.code),
-            h('span', null, ". 队员在竞赛信息管理页面可以输入邀请码加入本竞赛队伍。邀请码有效期24小时。")
-        ]), "邀请队员")
-    }).catch(error => {
-        if(error.network) return
-        switch (error.errorCode){
-            case 617:
-                ElMessage.error("只有队长可以创建邀请码")
-                return;
-        }
-        error.defaultHandler()
-    })
+const onAddStudentClicked = () => {
+    //TODO 选择学生的窗口、审核状态显示
+    ElMessage.error("这里应该打开一个选择学生的窗口，通过Promise来选择要添加的学生")
 }
 
 const onSubmitButtonClicked = () => {
@@ -362,8 +319,7 @@ const onSubmitButtonClicked = () => {
     })
 }
 
-const teammatesNotChanged = ref(true)
-const infoNotChanged = ref(true)
+
 const setCannotVerify = (_) => {
     teammatesNotChanged.value = false;
 }
@@ -371,34 +327,86 @@ const setInfoChanged = (_) => {
     infoNotChanged.value = false;
 }
 
-const setVerified = (row) => {
-    api.editApi.setRandVerification(teamId, true).then(res => {
-        ElMessage.success("已确认贡献排名，当排名发生更改时需要重新确认。")
-        row.verified = true;
-    }).catch(error => {
-        if(error.network) return;
-        switch (error.errorCode) {
-            case 620:
-                ElMessage.error("只有草稿和被打回状态可以修改确认状态。")
-                return;
+const isAnythingChanged = computed(()=>{
+    return !infoNotChanged.value || !teammatesNotChanged.value || isCertImageChanged.value;
+})
+
+const onNextButtonClicked = async () => {
+    if(isAnythingChanged.value === true){
+        try{
+            await ElMessageBox.confirm("您修改了本份参赛信息，继续将放弃所做的修改，确认继续？", "更改未保存",
+                {
+                    type: 'warning'
+                })
+        }catch(e){
+            return;
         }
-        error.defaultHandler()
-    })
+    }
+    checkSessionUtil.pushCheckHistory(teamId);
+    let nextId = checkSessionUtil.getNext(teamId);
+    if(nextId === -1){
+        try {
+            let res = (await api.checkApi.getNextCheckId(teamId, checkSessionUtil.getCheckSessionId()));
+            nextId = res.json.team_id;
+        }catch(error){
+            if(error.network) return
+            error.defaultHandler()
+            return;
+        }
+    }
+    if(nextId === -1){
+        ElMessage.info("当前没有更多待审核的参赛信息。")
+        return;
+    }
+
+    await router.push("/competitionCheck/check/" + nextId);
+    checkMessage.value = "";
 }
 
-const cancelVerified = (row) => {
-    api.editApi.setRandVerification(teamId, false).then(res => {
-        ElMessage.success("已取消确认贡献排名，当排名发生更改时需要重新确认。")
-        row.verified = false;
-    }).catch(error => {
-        if(error.network) return;
-        switch (error.errorCode) {
-            case 620:
-                ElMessage.error("只有草稿和被打回状态可以修改确认状态。")
-                return;
+const onPreviousButtonClicked = async () => {
+    if(isAnythingChanged.value === true){
+        try{
+            await ElMessageBox.confirm("您修改了本份参赛信息，继续将放弃所做的修改，确认继续？", "更改未保存",
+                {
+                    type: 'warning'
+                })
+        }catch(e){
+            return;
         }
-        error.defaultHandler()
-    })
+    }
+
+    checkSessionUtil.pushCheckHistory(teamId);
+    let prevId = checkSessionUtil.getPrevious(teamId);
+    if(prevId === -1){
+        ElMessage.info("当前是您本次审核的第一条参赛信息。")
+        return;
+    }
+    checkMessage.value = "";
+    await router.push("/competitionCheck/check/" + prevId);
+}
+
+const onRevertButtonClicked = () => {
+    ElMessageBox.confirm("确认要确认对本份参赛记录的更改？", "撤销更改",{
+        type: 'warning'
+    }).then(()=>{
+        reloadPage();
+    }).catch(()=>{})
+
+}
+
+const onPassButtonClicked = async () => {
+    await api.checkApi.changeVerifyStatus(teamId, 2, checkMessage.value);
+    await onNextButtonClicked();
+}
+
+const onDenyButtonClicked = async () => {
+    await api.checkApi.changeVerifyStatus(teamId, 3, checkMessage.value);
+    await onNextButtonClicked();
+    checkMessage.value = "";
+}
+
+const onGoBackButtonClicked = () => {
+    router.push("/competition/check");
 }
 
 
@@ -406,11 +414,34 @@ const cancelVerified = (row) => {
 
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">{{actionText}}竞赛信息</h1>
+        <h1 class="pageTitle">审核参赛信息</h1>
         <div class="helpText">
-            <p>帮助：您可以在本页面中{{actionText}}竞赛信息。若要填报不在系统中的竞赛信息，请提交工单。</p>
-            <p v-if="pageMode === 'teamEdit'">设置贡献时必须对队员进行排序，每个排名必须出现且至多出现一次，且不允许并列。</p>
+            <p>帮助：您可以在本页面中审核与修改学生填报的参赛信息。点击“审核通过”或“打回”将修改本份参赛信息的状态并跳转到下一份参赛信息。</p>
+            <p>如果需要修改内容后再审核通过，请先点击“保存”，再点击“审核通过”</p>
         </div>
+
+        <div class="operationButtons">
+            <el-button type="primary" @click="onGoBackButtonClicked" plain>返回</el-button>
+            <el-button type="primary" @click="onPreviousButtonClicked">上一个</el-button>
+            <el-button type="primary" @click="onSaveButtonClicked" :disabled="!isAnythingChanged">保存更改</el-button>
+            <el-button type="danger" @click="onRevertButtonClicked" :disabled="!isAnythingChanged">撤销更改</el-button>
+            <el-button type="success" @click="onPassButtonClicked" :disabled="isAnythingChanged">审核通过</el-button>
+            <el-button type="danger" @click="onDenyButtonClicked" :disabled="isAnythingChanged">打回</el-button>
+            <el-button type="primary" @click="onNextButtonClicked">下一个</el-button>
+        </div>
+        <el-row>
+            <el-col :span="24">
+                <el-form-item label="评审意见">
+                    <el-input
+                        v-model="checkMessage"
+                        :autosize="{ minRows: 2, maxRows: 10 }"
+                        type="textarea"
+                        placeholder=""
+                    />
+                </el-form-item>
+            </el-col>
+        </el-row>
+
         <el-row>
             <el-col :span="24">
                 <p class="sectionTitle">基础信息</p>
@@ -425,9 +456,9 @@ const cancelVerified = (row) => {
                         remote
                         placeholder="输入关键词进行搜索"
                         remote-show-suffix
-                        :remote-method="loadCompetitions"
+                        :remote-method="onCompetitionKeywordInput"
                         :loading="loading"
-                        @change="(_)=>{loadTerms();setInfoChanged(_);}"
+                        @change="(_)=>{onCompetitionSelected();setInfoChanged(_);}"
                     >
                         <el-option
                             v-for="item in competitions"
@@ -537,20 +568,16 @@ const cancelVerified = (row) => {
             </el-col>
         </el-row>
 
-        <el-row v-if="pageMode!=='teamNew'">
+        <el-row>
             <el-col :span="24">
                 <p class="sectionTitle">
                     <span>队员贡献</span>&nbsp
-                    <el-button type="primary" @click="onCreateCodeClicked">邀请队员</el-button>
+                    <el-button type="primary" @click="onAddStudentClicked">添加学生</el-button>
                 </p>
             </el-col>
         </el-row>
-        <el-row v-else>
-            <el-col>
-                <p>保存后可进一步修改队伍成员及其贡献。</p>
-            </el-col>
-        </el-row>
-        <el-table :data="sortedTeammates" v-if="pageMode!=='teamNew'" :row-class-name="teammateRowClassName" >
+
+        <el-table :data="sortedTeammates" :row-class-name="teammateRowClassName" >
             <el-table-column label="学号" property="stu_id"/>
             <el-table-column label="姓名" property="stu_name"/>
             <el-table-column label="贡献排名">
@@ -567,37 +594,19 @@ const cancelVerified = (row) => {
             </el-table-column>
             <el-table-column label="确认状态">
                 <template #default="scope">
-                    <div v-if="globalData.userInfo.user_id !== scope.row.user_id">
+                    <div>
                         <el-tag type="success" v-if="scope.row.verified">已确认</el-tag>
                         <el-tag type="info" v-else>未确认</el-tag>
                     </div>
-                    <div v-else>
-                        <div v-if="teammatesNotChanged">
-                            <el-button size="small" type="danger" @click="cancelVerified(scope.row)" v-if="scope.row.verified">取消确认</el-button>
-                            <el-button size="small" type="primary" @click="setVerified(scope.row)" v-else>确认</el-button>
-
-                        </div>
-                        <div v-else>
-                            <el-tooltip content="你对成员贡献顺序进行了修改，请先保存再进行操作">
-                                <el-button disabled size="small" type="danger"  v-if="scope.row.verified">取消确认</el-button>
-                                <el-button disabled size="small" type="primary" v-else>确认</el-button>
-                            </el-tooltip>
-                        </div>
-
-                    </div>
-
                 </template>
             </el-table-column>
 
         </el-table>
-        <div class="operationButtons" v-if="pageMode==='teamNew' || pageMode==='teamEdit'">
-            <el-button type="primary" @click="onSaveButtonClicked" :disabled="infoNotChanged && teammatesNotChanged">保存草稿</el-button>
-            <el-button type="primary" @click="onSubmitButtonClicked" v-if="pageMode!=='teamNew'">提交审核</el-button>
-        </div>
+
 
         <el-divider />
 
-        <el-col v-if="pageMode!=='teamNew'">
+        <el-col>
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
@@ -635,7 +644,7 @@ const cancelVerified = (row) => {
 }
 
 .operationButtons {
-    margin-top: 10px;
+    margin: 10px;
     text-align: center;
 }
 
