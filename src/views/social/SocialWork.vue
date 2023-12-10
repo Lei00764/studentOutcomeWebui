@@ -192,7 +192,7 @@ export default {
                         auditStatus: record.audit_status,
                         socialName: record.social_name,
                         socialId: record.social_id,
-                        voldetile: record.social_detiles,
+                        socialdetile: record.social_detiles,
                     }));
                 }
             } catch (err) {
