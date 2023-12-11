@@ -64,12 +64,12 @@ const router = createRouter({
                     children: [
                         {
                             path: "",
-                            name: "competitionHomeView",
-                            component: ()=>import("@/views/competition/CompetitionView.vue"),
+                            name: "competitionCheckHomeView",
+                            component: ()=>import("@/views/competition/CompetitionCheckListView.vue"),
                         },
                         {
-                            path: "check/:teamId",
-                            name: "teamEdit",
+                            path: ":teamId",
+                            name: "teamCheck",
                             component: () => import("@/views/competition/CompetitionCheckView.vue")
                         },
 
@@ -92,6 +92,7 @@ const router = createRouter({
                 },
             ]
         },
+
         { path: '/:pathMatch(.*)*', name: 'NotFound', component: ()=>import("@/pages/ErrorPage.vue") },
     ]
 })

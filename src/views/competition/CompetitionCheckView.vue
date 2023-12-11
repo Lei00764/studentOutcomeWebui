@@ -5,6 +5,7 @@ import {computed, reactive, ref, watch, h} from "vue";
 import {ElMessage, ElMessageBox, genFileId} from "element-plus";
 import checkSessionUtil from "@/utils/checkSession"
 import api from "@/api/competition";
+import SelectStudentPanel from "@/components/SelectStudentPanel.vue";
 
 const routerWatchable = useRoute()
 
@@ -31,7 +32,7 @@ const teammates = ref([])
 
 const certUrl = ref("")
 const isCertImageChanged = ref(false)
-
+const statusCode = ref(0)
 const checkMessage = ref("")
 const teammatesNotChanged = ref(true)
 const infoNotChanged = ref(true)
@@ -44,12 +45,24 @@ const queryForm = reactive({
     desc: ""
 })
 
+const statusCodeList = {
+    0:{name:"草稿",tagType:"info"},
+    1:{name:"等待审核",tagType:"warning"},
+    2:{name:"审核通过",tagType:"success"},
+    3:{name:"审核不通过",tagType:"danger"}
+}
+
 const organizer = ref()
 const termLevelName = ref()
 const competitionType = ref()
 
 // upload 的图片超过上限，把原来的图片换掉
 const elUploadImg = ref()
+/**
+ *
+ * @type {Ref<SelectStudentPanel>}
+ */
+const selectStudentPanel = ref()
 
 const reloadPage = () => {
     api.editApi.getTeamInfo(teamId).then(res => {
@@ -73,6 +86,8 @@ const reloadPage = () => {
         operationLogs.value = res.json.logs;
 
         teammates.value = res.json.members;
+
+        statusCode.value = res.json.status;
 
         isCertImageChanged.value = false
         certUrl.value = res.json.certification_img_url;
@@ -294,26 +309,33 @@ const onClearOriginalCertImage = () => {
 }
 
 const onAddStudentClicked = () => {
-    //TODO 选择学生的窗口、审核状态显示
-    ElMessage.error("这里应该打开一个选择学生的窗口，通过Promise来选择要添加的学生")
+
+    selectStudentPanel.value.selectStudent().then((ans)=>{
+        console.log(ans);
+        api.checkApi.addStudentToTeam(teamId, ans.user_id).then(()=>{
+            ElMessage.success("已添加 " + ans.stu_name +" ，请设置其贡献顺序。")
+            reloadPage();
+        }).catch(error => {
+            loading.value = false
+            if(error.network) return
+            error.defaultHandler()
+        })
+    }).catch((error)=>{
+        ElMessage.info("取消添加学生")
+    })
 }
 
-const onSubmitButtonClicked = () => {
-    ElMessageBox.confirm("确认要提交审核吗？如果进行了修改请先保存。", "提交审核",
+const onRemoveStudentButtonClicked = (row) => {
+    console.log(row)
+    ElMessageBox.confirm("确认要从本参赛记录中移除该学生吗？操作将立即生效。", "移除学生",
         {
             type: 'warning'
         }).then(()=>{
-        api.editApi.submitToReview(teamId).then(res => {
-            ElMessage.success("已提交审核 ")
-            router.replace('/competition/view/' + teamId);
-
+        api.checkApi.removeStudentFromTeam(teamId, row.user_id).then(res => {
+            ElMessage.success("已移除学生 " + row.stu_name)
+            reloadPage();
         }).catch(error => {
             if(error.network) return
-            switch (error.errorCode){
-                case 621:
-                    ElMessage.error("有队伍成员没有确认贡献")
-                    return;
-            }
             error.defaultHandler()
         })
     })
@@ -359,7 +381,7 @@ const onNextButtonClicked = async () => {
         return;
     }
 
-    await router.push("/competitionCheck/check/" + nextId);
+    await router.push("/competitionCheck/" + nextId);
     checkMessage.value = "";
 }
 
@@ -382,7 +404,7 @@ const onPreviousButtonClicked = async () => {
         return;
     }
     checkMessage.value = "";
-    await router.push("/competitionCheck/check/" + prevId);
+    await router.push("/competitionCheck/" + prevId);
 }
 
 const onRevertButtonClicked = () => {
@@ -406,7 +428,7 @@ const onDenyButtonClicked = async () => {
 }
 
 const onGoBackButtonClicked = () => {
-    router.push("/competition/check");
+    router.push("/competitionCheck");
 }
 
 
@@ -417,18 +439,15 @@ const onGoBackButtonClicked = () => {
         <h1 class="pageTitle">审核参赛信息</h1>
         <div class="helpText">
             <p>帮助：您可以在本页面中审核与修改学生填报的参赛信息。点击“审核通过”或“打回”将修改本份参赛信息的状态并跳转到下一份参赛信息。</p>
-            <p>如果需要修改内容后再审核通过，请先点击“保存”，再点击“审核通过”</p>
+            <p>如果需要修改内容后再审核通过，请先点击“保存”，再点击“审核通过”。添加/移除学生的操作将立即生效，但请手动调整并保存新的贡献顺序。</p>
         </div>
 
         <div class="operationButtons">
             <el-button type="primary" @click="onGoBackButtonClicked" plain>返回</el-button>
             <el-button type="primary" @click="onPreviousButtonClicked">上一个</el-button>
-            <el-button type="primary" @click="onSaveButtonClicked" :disabled="!isAnythingChanged">保存更改</el-button>
-            <el-button type="danger" @click="onRevertButtonClicked" :disabled="!isAnythingChanged">撤销更改</el-button>
-            <el-button type="success" @click="onPassButtonClicked" :disabled="isAnythingChanged">审核通过</el-button>
-            <el-button type="danger" @click="onDenyButtonClicked" :disabled="isAnythingChanged">打回</el-button>
             <el-button type="primary" @click="onNextButtonClicked">下一个</el-button>
         </div>
+
         <el-row>
             <el-col :span="24">
                 <el-form-item label="评审意见">
@@ -441,6 +460,13 @@ const onGoBackButtonClicked = () => {
                 </el-form-item>
             </el-col>
         </el-row>
+
+        <div class="operationButtons">
+            <el-button type="primary" @click="onSaveButtonClicked" :disabled="!isAnythingChanged">保存更改</el-button>
+            <el-button type="danger" @click="onRevertButtonClicked" :disabled="!isAnythingChanged">撤销更改</el-button>
+            <el-button type="success" @click="onPassButtonClicked" :disabled="isAnythingChanged">审核通过</el-button>
+            <el-button type="danger" @click="onDenyButtonClicked" :disabled="isAnythingChanged">打回</el-button>
+        </div>
 
         <el-row>
             <el-col :span="24">
@@ -533,6 +559,11 @@ const onGoBackButtonClicked = () => {
                     <el-text>{{termLevelName}}</el-text>
                 </el-form-item>
             </el-col>
+            <el-col :span="6">
+                <el-form-item label="审核状态">
+                    <el-tag :type="statusCodeList[statusCode].tagType">{{statusCodeList[statusCode].name}}</el-tag>
+                </el-form-item>
+            </el-col>
         </el-row>
         <el-row>
             <el-col :span="24">
@@ -600,7 +631,15 @@ const onGoBackButtonClicked = () => {
                     </div>
                 </template>
             </el-table-column>
-
+            <el-table-column label="操作">
+                <template #default="scope">
+                    <div>
+                        <el-button link type="danger" size="small" @click="onRemoveStudentButtonClicked(scope.row)">
+                            移除
+                        </el-button>
+                    </div>
+                </template>
+            </el-table-column>
         </el-table>
 
 
@@ -618,7 +657,7 @@ const onGoBackButtonClicked = () => {
                 {{ activity.msg }}
             </el-timeline-item>
         </el-timeline>
-
+        <SelectStudentPanel ref="selectStudentPanel"></SelectStudentPanel>
     </div>
 </template>
 
@@ -644,7 +683,7 @@ const onGoBackButtonClicked = () => {
 }
 
 .operationButtons {
-    margin: 10px;
+    margin-bottom: 10px;
     text-align: center;
 }
 
