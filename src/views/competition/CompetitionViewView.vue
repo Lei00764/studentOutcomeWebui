@@ -145,7 +145,7 @@ const teammateRowClassName = ({row, rowIndex}) => {
             <el-descriptions-item label="级别">
                 <el-text>{{termLevelName}}</el-text>
             </el-descriptions-item>
-            <el-descriptions-item label="提交状态">
+            <el-descriptions-item label="审核状态">
                 <el-tag :type="statusCodeList[statusCode].tagType">{{statusCodeList[statusCode].name}}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item :span="4" label="证书">

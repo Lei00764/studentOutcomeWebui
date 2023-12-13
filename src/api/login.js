@@ -24,9 +24,27 @@ const updatePassword = (oldPassword, newPassword) => {
     })
 }
 
+/**
+ * 通过条件筛选学生
+ * @param field 字段名
+ * @param keyword 关键字
+ * @param {boolean} precise 是否精确查找
+ * @param {number} pageNo 页码，一页10个？
+ * @return {Promise}
+ */
+const getStudentPageWithKeyword = (field, keyword, precise, pageNo) => {
+    return request.post("/api/studentInfo/select",{
+        field: field,
+        keyword: keyword,
+        precise: precise,
+        page: pageNo
+    })
+}
+
 export default {
     login,
     getUserInfo,
     logout,
-    updatePassword
+    updatePassword,
+    getStudentPageWithKeyword
 }
