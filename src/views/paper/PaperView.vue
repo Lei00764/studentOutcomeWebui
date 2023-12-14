@@ -41,20 +41,21 @@ import router from "@/router";
                 <el-input type="textarea" v-model="paper.abstract" :rows="4" />
             </el-form-item>
 
-            <el-form-item label="附件上传" prop="attachments">
-                <el-upload v-model:file-list="paper.attachments" action="#" list-type="picture-card"
+            <el-form-item label="附件上传" prop="evidence">
+                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
                             :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag multiple>
-                <el-icon>
-                    <Plus />
-                    <!-- <i class="el-icon-upload"></i> -->
-                </el-icon>
-                <div class="upload-text">
-                    拖拽文件至此或 <em>点击上传</em>
-                </div>
+                  <el-icon>
+                      <Plus />
+                      <!-- <i class="el-icon-upload"></i> -->
+                  </el-icon>
+                  <div class="upload-text">
+                      拖拽文件至此或 <em>点击上传</em>
+                  </div>
                 </el-upload>
 
                 <el-dialog v-model="attachmentDialogVisible">
-                <img :src="attachmentDialogImageUrl" alt="附件预览" style="max-width: 100%; max-height: 100%;" />
+                  <img :src="attachmentDialogImageUrl" alt="附件预览" 
+                        style="max-width: 100%; max-height: 100%;" />
                 </el-dialog>
 
             </el-form-item>
@@ -82,22 +83,15 @@ import router from "@/router";
                 </div>
                 </template>
                 <div class="text item">
-                <p><strong>提交日期: </strong>{{ record.submissionDate }}</p>
-                <p><strong>作者: </strong>{{ record.paper_author }}</p>
-                <p><strong>审核状态: </strong>
-                    <span v-if="record.auditStatus === 'failed'" style="color: red;">审核失败</span>
-                    <span v-else-if="record.auditStatus === 'passed'" style="color: green;">审核通过</span>
-                    <span v-else style="color: gray;">未审核</span>
-                </p>
-                <!-- 显示附件 -->
-                <el-upload
-                    v-if="record.attachments.length > 0"
-                    :file-list="record.attachments"
-                    class="upload-list"
-                    list-type="picture-card"
-                >
-                    <el-button size="small" type="text" icon="el-icon-view" @click="viewAttachments(record.attachments)"></el-button>
-                </el-upload>
+                  <p><strong>提交日期: </strong>{{ record.submissionDate }}</p>
+                  <p><strong>作者: </strong>{{ record.paper_author }}</p>
+                  <p><strong>审核状态: </strong>
+                      <span v-if="record.auditStatus === 'failed'" style="color: red;">审核失败</span>
+                        <span v-else-if="record.auditStatus === 'passed'" style="color: green;">审核通过</span>
+                      <span v-else style="color: gray;">未审核</span>
+                  </p>
+                  <!-- 显示附件 -->
+                  <img :src="record.evidence" alt="证据图片">
                 </div>
             </el-card>
         </el-space>
@@ -123,16 +117,13 @@ export default {
   name:'paperView',
   data() {
     return {
-      paper: reactive({
+      paper: {
         title: '',
         author: '',
-        submissionDate: null,
+        submissionDate: '',
         abstract: '',
-        attachments: [],
         situation: ''
-      }),
-
-      fileList: [],
+      },
 
       rules: {
         title: [{ required: true, message: '请填写论文标题', trigger: 'blur' }],
@@ -152,124 +143,95 @@ export default {
 
       operationLogs: [],
 
+      fileList: [],
+
     };
   },
   
   methods: {
     onSubmit() {
-            console.log('submit!');
-            console.log(this.evidencecheck.attachmentdialogImageUrl);
+        // 提交论文申报日志
+        console.log('submit!');
+        console.log(this.evidencecheck.attachmentdialogImageUrl);
 
-            api.submitCreate({
-                user_id: 2,
-                paper_title: this.paper_title,
-                paper_author: this.paper_author,
-                paper_abstract: this.paper_abstract,
-                paper_situation: this.paper_situation,
-                auditStatus: record.auditStatus,
-                submissionDate: new Date(this.paper_submissionDate).toISOString().split('T')[0],
-                attachments: this.evidencecheck.attachmentdialogImageUrl,
-            })
-                .then((res) => {
+        api.submitCreate({
+          //左边是api中获取的变量，右边是paper中自己设定的变量
+            user_id: 2,
+            paper_title: this.paper.title,
+            paper_author: this.paper.author,
+            submissionDate: new Date(this.paper.submissionDate).toISOString().split('T')[0],
+            evidence: this.evidencecheck.attachmentdialogImageUrl,
+        })
+
+            .then((res) => {
                     console.log(res.status);
                 })
                 .catch((error) => {
                     console.error('Error enrolling in training:', error);
                 });
 
-            location.reload();
+        location.reload();
     },
 
-    handlePictureCardPreview(file) {
+    handlePictureCardPreview(uploadFile) {
       // 预览附件图片
-      this.attachmentDialogImageUrl = file.url;
+      this.attachmentDialogImageUrl = uploadFile.url;
       this.attachmentDialogVisible = true;
     },
 
-    handleRemove(file) {
-      // 移除附件
-      const index = this.paper.attachments.indexOf(file);
-      if (index !== -1) {
-        this.paper.attachments.splice(index, 1);
-      }
-    },
-
-    async onSubmit() {
-      try {
-        const response = await api.submitCreate({
-          user_id: 2,
-          paper_title: this.paper.title,
-          author: this.paper.author,
-          submission_date: this.paper.submissionDate,
-          abstract: this.paper.abstract,
-          attachments: this.paper.attachments,
-        });
-
-        if (response.status === 200) {
-          console.log('论文申报成功！');
-          location.reload(); // 重新加载页面或者执行其他操作
-        }
-      } catch (error) {
-        console.error('Error submitting paper:', error);
-      }
+    handleRemove(uploadFile, uploadFiles) {
+      console.log(uploadFile, uploadFiles);
     },
 
     parseToInt(value) {
-            const parsedValue = parseInt(value, 10);
-            if (isNaN(parsedValue)) {
-                return 0;
-            }
-            return parsedValue;
+      const parsedValue = parseInt(value, 10);
+      if (isNaN(parsedValue)) {
+          return 0;
+      }
+      return parsedValue;
     },
 
-    async fetchHistoryRecords(value) {
-      const userid = this.parseToInt(value);
-            try {
-                const res = await api.getRecord({ user_id: userid });
-                if (res.status === 200) {
-                    console.log('success');
-                    this.HistoryRecord = res.data.data.map((record) => ({
-                        paper_situation:record.paper_situation,
-                        submissionDate:record.submission_date,
-                        attachments:record.attachments,
-                        paper_title:record.paper_title,
-                        paper_author:record.paper_author,
-                        paper_abstract:record.paper_abstract,
-                        paperId:record.paper_id,
-                    }));
-                }
-            } catch (err) {
-                console.log('fail');
-                console.log(err);
-            }
-    },
+    async getHistoryRecord(value) {
+          const userid = this.parseToInt(value);
+          try {
+              const res = await api.getRecord({ user_id: userid });
+              if (res.status === 200) {
+                  console.log('success');
+                  this.HistoryRecord = res.data.data.map((record) => ({
+                    //右边是apifox变量，左边是自己设的变量(和上文的函数要相对应)
+                      submissionDate: record.submissionDate,
+                      author: record.paper_author,
+                      title: record.paper_title,
+                      evidence: record.evidence,
+                      auditStatus: record.paper_situation,
+                      paperId: record.paper_id,
+                      abstract: record.paper_abstract,
+                  }));
+              }
+          } catch (err) {
+              console.log('fail');
+              console.log(err);
+          }
+      },
 
-    editRecord(paperId) {
-      // 编辑历史填报记录的逻辑
-    },
-    deleteRecord(paperId) {
-      // 删除历史填报记录的逻辑
-      console.log('delete record');
-            const paper_id = this.parseToInt(paperId);
-            const res = api.deleteRecord({ paper_record_id: paper_id });
+    deleteRecord(nowpaper_id) {
+            console.log('delete record');
+            const pap_id = this.parseToInt(nowpaper_id);
+            const res = api.deleteRecord({ paper_id: pap_id });
             console.log(res);
             console.log(res.code);
             if (res.code === 200) {
-                const index = this.HistoryRecord.findIndex((record) => record.paper_id === paper_id);
+                const index = this.HistoryRecord.findIndex((record) => record.paper_id === pap_id);
                 if (index !== -1) {
                     this.HistoryRecord.splice(index, 1);
                 }
             }
-    },
-    viewAttachments(attachments) {
-      // 查看附件的逻辑
-    },
-
+        },
   },
 
   mounted() {
-    this.fetchHistoryRecords(2); // 获取历史填报记录
-  },
+        this.getHistoryRecord(2);
+    },
 
 };
 </script>
@@ -313,4 +275,45 @@ export default {
     font-weight: 700;
     margin: 16px 0;
 }
+
+.box-card {
+    width: 250px;
+    height: 300px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.header-left {
+    margin-right: 10px;
+    /* 根据需要调整左侧元素的右边距 */
+}
+
+.text {
+    font-size: 14px;
+}
+
+.item {
+    margin-bottom: 18px;
+}
+
+.submit-button-create {
+    width: 120px;
+    height: 30px;
+}
+
+.submit-button-cancel {
+    width: 120px;
+    height: 30px;
+}
+
+.submit-button-cancel:hover {
+    /* width: 120px;
+    height: 30px; */
+    background-color: red;
+    color: white;
+}
+
 </style>

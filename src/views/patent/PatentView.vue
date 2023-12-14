@@ -3,7 +3,7 @@ import {computed, onBeforeMount, reactive, watch} from 'vue'
 import {ElMessage, ElMessageBox, ElUpload, ElDialog, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton} from "element-plus";
 import { ref } from 'vue'
 import { ElTable } from 'element-plus'
-//import api from '@/api/paper'
+//import api from '@/api/patent'
 import globalData from "@/global/global"
 import router from "@/router";
 
@@ -41,20 +41,21 @@ import router from "@/router";
                 <el-input type="textarea" v-model="paper.abstract" :rows="4" />
             </el-form-item>
 
-            <el-form-item label="附件上传" prop="attachments">
-                <el-upload v-model:file-list="paper.attachments" action="#" list-type="picture-card"
+            <el-form-item label="附件上传" prop="evidence">
+                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
                             :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag multiple>
-                <el-icon>
-                    <Plus />
-                    <!-- <i class="el-icon-upload"></i> -->
-                </el-icon>
-                <div class="upload-text">
-                    拖拽文件至此或 <em>点击上传</em>
-                </div>
+                  <el-icon>
+                      <Plus />
+                      <!-- <i class="el-icon-upload"></i> -->
+                  </el-icon>
+                  <div class="upload-text">
+                      拖拽文件至此或 <em>点击上传</em>
+                  </div>
                 </el-upload>
 
                 <el-dialog v-model="attachmentDialogVisible">
-                <img :src="attachmentDialogImageUrl" alt="附件预览" style="max-width: 100%; max-height: 100%;" />
+                  <img :src="attachmentDialogImageUrl" alt="附件预览" 
+                        style="max-width: 100%; max-height: 100%;" />
                 </el-dialog>
 
             </el-form-item>
@@ -69,44 +70,48 @@ import router from "@/router";
         <h1 class="pageTitle">历史填报</h1>
 
         <el-space wrap>
-            <el-card v-for="record in historyRecords" :key="record.paperId" class="box-card" style="width: 250px">
+             <el-card v-for="record in HistoryRecord" :key="record.patentId" class="box-card" style="width: 250px">
                 <template #header>
                 <div class="card-header">
                     <div class="header-left">
                     <span>{{ record.title }}</span>
                     </div>
                     <div class="header-right">
-                    <el-button class="button" text @click="editRecord(record.paperId)" type="primary">修改</el-button>
-                    <el-button class="button" text @click="deleteRecord(record.paperId)" type="danger">删除</el-button>
+                    <el-button class="button" text @click="editRecord(record.patentId)" type="primary">修改</el-button>
+                    <el-button class="button" text @click="deleteRecord(record.patentId)" type="danger">删除</el-button>
                     </div>
                 </div>
                 </template>
                 <div class="text item">
                 <p><strong>提交日期: </strong>{{ record.submissionDate }}</p>
-                <p><strong>作者: </strong>{{ record.author }}</p>
+                <p><strong>作者: </strong>{{ record.patent_author }}</p>
                 <p><strong>审核状态: </strong>
                     <span v-if="record.auditStatus === 'failed'" style="color: red;">审核失败</span>
                     <span v-else-if="record.auditStatus === 'passed'" style="color: green;">审核通过</span>
                     <span v-else style="color: gray;">未审核</span>
                 </p>
                 <!-- 显示附件 -->
-                <el-upload
-                    v-if="record.attachments.length > 0"
-                    :file-list="record.attachments"
-                    class="upload-list"
-                    list-type="picture-card"
-                >
-                    <el-button size="small" type="text" icon="el-icon-view" @click="viewAttachments(record.attachments)"></el-button>
-                </el-upload>
+                <img :src="record.evidence" alt="证据图片">
                 </div>
             </el-card>
         </el-space>
+
+        <el-col>
+            <p class="sectionTitle">操作日志</p>
+        </el-col>
+        <el-timeline>
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.time">
+                {{ activity.msg }}
+            </el-timeline-item>
+        </el-timeline>
 
     </div>
 
 </template>
 
 <script>
+
+import api from '@/api/patent';
 
 export default {
 
@@ -115,13 +120,11 @@ export default {
       paper: reactive({
         title: '',
         author: '',
-        submissionDate: null,
+        submissionDate: '',
         abstract: '',
-        attachments: [],
-        situation: '',
+        situation: ''
       }),
-      attachmentDialogVisible: false,
-      attachmentDialogImageUrl: '',
+
       rules: {
         title: [{ required: true, message: '请填写论文标题', trigger: 'blur' }],
         author: [{ required: true, message: '请填写作者信息', trigger: 'blur' }],
@@ -129,27 +132,107 @@ export default {
         situation: [{ required: true, message: '请填写专利状态', trigger: 'blur' }],
         abstract: [{ required: true, message: '请填写摘要', trigger: 'blur' }],
       },
+
+      evidencecheck: {
+        attachmentdialogImageUrl: '',
+        attachmentDialogVisible: false,
+        disabled: false,
+      },
+
+      HistoryRecord: [],
+
+      operationLogs: [],
+
+      fileList: [],
+
     };
   },
   
   methods: {
     onSubmit() {
-      // 提交论文申报数据
-      ElMessage.success('论文申报成功！');
+        // 提交论文申报日志
+        console.log('submit!');
+        console.log(this.evidencecheck.attachmentdialogImageUrl);
+
+        api.submitCreate({
+          //左边是api中获取的变量，右边是paper中自己设定的变量
+            user_id: 2,
+            patent_title: this.patent.title,
+            patent_author: this.patent.author,
+            submissionDate: new Date(this.patent.submissionDate).toISOString().split('T')[0],
+            evidence: this.evidencecheck.attachmentdialogImageUrl,
+        })
+
+            .then((res) => {
+                    console.log(res.status);
+                })
+                .catch((error) => {
+                    console.error('Error enrolling in training:', error);
+                });
+
+        location.reload();
     },
-    handlePictureCardPreview(file) {
+
+    handlePictureCardPreview(uploadFile) {
       // 预览附件图片
-      this.attachmentDialogImageUrl = file.url;
+      this.attachmentDialogImageUrl = uploadFile.url;
       this.attachmentDialogVisible = true;
     },
-    handleRemove(file) {
-      // 移除附件
-      const index = this.paper.attachments.indexOf(file);
-      if (index !== -1) {
-        this.paper.attachments.splice(index, 1);
-      }
+
+    handleRemove(uploadFile, uploadFiles) {
+      console.log(uploadFile, uploadFiles);
     },
+
+    parseToInt(value) {
+      const parsedValue = parseInt(value, 10);
+      if (isNaN(parsedValue)) {
+          return 0;
+      }
+      return parsedValue;
+    },
+
+    async getHistoryRecord(value) {
+          const userid = this.parseToInt(value);
+          try {
+              const res = await api.getRecord({ user_id: userid });
+              if (res.status === 200) {
+                  console.log('success');
+                  this.HistoryRecord = res.data.data.map((record) => ({
+                    //右边是apifox变量，左边是自己设的变量(和上文的函数要相对应)
+                      submissionDate: record.submissionDate,
+                      author: record.patent_author,
+                      title: record.patent_title,
+                      evidence: record.evidence,
+                      auditStatus: record.patent_situation,
+                      patentId: record.patent_id,
+                      abstract: record.patent_abstract,
+                  }));
+              }
+          } catch (err) {
+              console.log('fail');
+              console.log(err);
+          }
+      },
+
+    deleteRecord(nowpatent_id) {
+            console.log('delete record');
+            const pap_id = this.parseToInt(nowpatent_id);
+            const res = api.deleteRecord({ patent_id: pap_id });
+            console.log(res);
+            console.log(res.code);
+            if (res.code === 200) {
+                const index = this.HistoryRecord.findIndex((record) => record.patent_id === pap_id);
+                if (index !== -1) {
+                    this.HistoryRecord.splice(index, 1);
+                }
+            }
+        },
   },
+
+  mounted() {
+        this.getHistoryRecord(2);
+    },
+
 };
 </script>
 
@@ -185,4 +268,52 @@ export default {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.sectionTitle {
+    color: var(--el-text-color-primary);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 16px 0;
+}
+
+.box-card {
+    width: 250px;
+    height: 300px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.header-left {
+    margin-right: 10px;
+    /* 根据需要调整左侧元素的右边距 */
+}
+
+.text {
+    font-size: 14px;
+}
+
+.item {
+    margin-bottom: 18px;
+}
+
+.submit-button-create {
+    width: 120px;
+    height: 30px;
+}
+
+.submit-button-cancel {
+    width: 120px;
+    height: 30px;
+}
+
+.submit-button-cancel:hover {
+    /* width: 120px;
+    height: 30px; */
+    background-color: red;
+    color: white;
+}
+
 </style>

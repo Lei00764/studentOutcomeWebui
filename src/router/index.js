@@ -77,13 +77,18 @@ const router = createRouter({
                 },
                 {
                     path: "paper",
-                    name: "papersView",
-                    component: ()=>import("@/views/paper/PaperView.vue"),
+                    name: "paperView",
+                    component: ()=>import("@/views/paper/paperView.vue"),
                 },
                 {
                     path: "patent",
-                    name: "patentsView",
-                    component: ()=>import("@/views/patent/PatentView.vue"),
+                    name: "patentView",
+                    component: ()=>import("@/views/patent/patentView.vue"),
+                },
+                {
+                    path: "volunteers",
+                    name: "volunteersView",
+                    component: ()=>import("@/views/volunteer/reviewVolunteers.vue"),
                 },
                 {
                     path: "socialWork",
