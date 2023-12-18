@@ -219,15 +219,16 @@ export default {
             this.$router.push({ name: 'changeVolunteers', params: { id: volId } });
         },
 
-        deleteRecord(vol_id) {
-            console.log(vol_id);
+        deleteRecord(nowvol_id) {
+            console.log(nowvol_id);
             console.log('delete record');
+            const vol_id = this.parseToInt(nowvol_id);
+
             // 注意这里使用的是箭头函数
             const res = api.deleteRecord({ vol_id: vol_id });
             res.then(() => {
                 console.log("成功了");
-            }).catch((err) => {
-                console.log(err);
+            }).catch(() => {
                 console.log("错误了");
             });
 
