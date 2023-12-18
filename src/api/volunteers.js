@@ -8,13 +8,14 @@ const submitCreate = (params) => {
     })
 }
 
-const getRecord = (params) => {
+const getRecord = () => {
+    console.log("到了打印部分")
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/Volunteers/selectStuRecord?apifoxApiId=118198285',
-        method: 'get',
-        params
-    })
-}
+        url: '/api/volunteer/selectVolunteerInfo',
+        method: 'get',            
+    });
+};
+
 
 const deleteRecord = (params) => {
     return request({
@@ -24,8 +25,16 @@ const deleteRecord = (params) => {
     })
 }
 
+const chanegRecord = (params) => {
+    return request({
+        url: '/api/volunteer/changeVolunteerInfo',
+        method: 'post',
+        params
+    })
+}
 export default {
     submitCreate,
     getRecord,
-    deleteRecord
+    deleteRecord,
+    chanegRecord
 }
