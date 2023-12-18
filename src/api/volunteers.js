@@ -19,7 +19,7 @@ const getRecord = () => {
 
 const deleteRecord = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/Volunteers/deleteStuRecord',
+        url: '/api/volunteer/deleteVolunteerInfo',
         method: 'post',
         params
     })
