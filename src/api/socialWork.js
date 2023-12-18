@@ -2,7 +2,7 @@ import request from "@/utils/request"
 
 const submitCreate = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/Social/deleteStuRecord',
+        url: '/api/Social/deleteStuRecord',
         method: 'post',
         params
     })
@@ -10,7 +10,7 @@ const submitCreate = (params) => {
 
 const getRecord = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/social/selectStuRecord',
+        url: '/api/social/selectStuRecord',
         method: 'get',
         params
     })
@@ -18,7 +18,7 @@ const getRecord = (params) => {
 
 const deleteRecord = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/social/insertVolunteers',
+        url: '/api/social/insertVolunteers',
         method: 'post',
         params
     })
