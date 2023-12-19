@@ -83,12 +83,17 @@ const router = createRouter({
                 {
                     path: "socialWork",
                     name: "socialWork",
-                    component: ()=>import("@/views/social/socialWork.vue"),
+                    component: ()=>import("@/views/social/SocialWork.vue"),
                 },
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
                     component: ()=>import("@/views/volunteer/changeVolunteers.vue"),
+                },
+                {
+                    path: "changeSocialworks",
+                    name: "changeSocialworks",
+                    component: ()=>import("@/views/social/ChangeSocialwork.vue"),
                 },
             ]
         },
