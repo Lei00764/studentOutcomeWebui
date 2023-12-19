@@ -2,7 +2,7 @@ import request from "@/utils/request"
 
 const submitCreate = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/Volunteers/selectStuRecord',
+        url: '/api/Volunteers/selectStuRecord',
         method: 'post',
         params
     })

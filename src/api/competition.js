@@ -106,7 +106,55 @@ const viewApi = {
     }
 }
 
+const checkApi = {
+    getNextCheckId: (currentTeamId, checkSessionId) => {
+        return request.post("/api/competition/check/getNext", {
+            current_team_id: currentTeamId,
+            check_session_id: checkSessionId
+        })
+    },
+    changeVerifyStatus: (teamId, statusId, checkMessage) => {
+        return request.post("/api/competition/check/changeVerifyStatus",{
+            team_id: teamId,
+            status: statusId,
+            msg: checkMessage
+        })
+    },
+    addStudentToTeam: (teamId, newStuUserId) => {
+        return request.post("/api/competition/check/addStudentToTeam",{
+            team_id: teamId,
+            user_id: newStuUserId
+        })
+    },
+    removeStudentFromTeam: (teamId, StuUserIdToRemove) => {
+        return request.post("/api/competition/check/removeStudentFromTeam",{
+            team_id: teamId,
+            user_id: StuUserIdToRemove
+        })
+    },
+    /**
+     * @typedef {Object} QueryField
+     * @property {string} field 字段
+     * @property {string} keyword 关键字
+     * @property {boolean} precise 是否精确查找
+     */
+
+    /**
+     * 通过一堆关键字联合查询
+     * @param {QueryField[]} fields 字段名列表
+     * @param {number} pageNo 页码，一页20个？
+     * @return {Promise}
+     */
+    getTeamPageWithKeyword: (fields, pageNo) => {
+        return request.post("/api/competition/check/getTeam",{
+            fields:[fields],
+            page: pageNo
+        })
+    },
+}
+
 export default {
     editApi,
-    viewApi
+    viewApi,
+    checkApi
 }
