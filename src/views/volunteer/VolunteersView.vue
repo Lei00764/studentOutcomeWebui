@@ -138,6 +138,8 @@ export default {
                 participate_time: '',
                 duration_day: '',
                 duration_hour: '',
+                vol_type: '',      
+                vol_detail: '',   
             },
             operationLogs: [],
             fileList: [],
@@ -155,7 +157,6 @@ export default {
             console.log(this.evidenceCheck.dialogImageUrl);
 
             api.submitCreate({
-                user_id: 2,
                 VOL_name: this.volunteers.VOL_name,
                 participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
                 duration_day: this.parseToInt(this.volunteers.duration_day),

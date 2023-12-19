@@ -2,30 +2,38 @@ import request from "@/utils/request"
 
 const submitCreate = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/Social/deleteStuRecord',
+        url: '/api/social/insertsocial',
         method: 'post',
         params
     })
 }
 
-const getRecord = (params) => {
+const getRecord = () => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/social/selectStuRecord',
-        method: 'get',
-        params
-    })
-}
+        url: '/api/social/selectStuRecord',
+        method: 'get',            
+    });
+};
+
 
 const deleteRecord = (params) => {
     return request({
-        url: 'http://127.0.0.1:4523/m1/3206870-0-default/api/social/insertVolunteers',
+        url: '/api/Social/deleteStuRecord',
         method: 'post',
         params
     })
 }
 
+const chanegRecord = (params) => {
+    return request({
+        url: '/api/social/changesocial',
+        method: 'post',
+        params
+    })
+}
 export default {
     submitCreate,
     getRecord,
-    deleteRecord
+    deleteRecord,
+    chanegRecord
 }
