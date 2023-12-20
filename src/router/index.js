@@ -81,9 +81,19 @@ const router = createRouter({
                     component: ()=>import("@/views/paper/paperView.vue"),
                 },
                 {
+                    path: "ChangePaperwork",
+                    name: "ChangePaperwork",
+                    component: ()=>import("@/views/paper/ChangePaperwork.vue"),
+                },
+                {
                     path: "patent",
                     name: "patentView",
                     component: ()=>import("@/views/patent/patentView.vue"),
+                },
+                {
+                    path: "ChangePatentwork",
+                    name: "ChangePatentwork",
+                    component: ()=>import("@/views/patent/ChangePatentwork.vue"),
                 },
                 {
                     path: "volunteers",

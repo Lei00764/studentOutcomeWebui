@@ -7,9 +7,6 @@ import { ElTable } from 'element-plus'
 import globalData from "@/global/global"
 import router from "@/router";
 
-
-
-
 </script>
 
 <template>
@@ -20,25 +17,25 @@ import router from "@/router";
         </div>
 
 
-        <el-form :model="paper" label-width="120px" status-icon :rules="rules">
+        <el-form :model="patent" label-width="120px" status-icon :rules="rules">
             <el-form-item label="专利标题" prop="title">
-                <el-input v-model="paper.title" />
+                <el-input v-model="patent.title" />
             </el-form-item>
 
             <el-form-item label="作者" prop="author">
-                <el-input v-model="paper.author" />
+                <el-input v-model="patent.author" />
             </el-form-item>
 
             <el-form-item label="提交日期" prop="submissionDate">
-                <el-date-picker v-model="paper.submissionDate" type="date" placeholder="请选择日期" />
+                <el-date-picker v-model="patent.submissionDate" type="date" placeholder="请选择日期" />
             </el-form-item>
 
             <el-form-item label="专利状态" prop="situation">
-                <el-input v-model="paper.situation" />
+                <el-input v-model="patent.situation" />
             </el-form-item>
 
             <el-form-item label="摘要" prop="abstract">
-                <el-input type="textarea" v-model="paper.abstract" :rows="4" />
+                <el-input type="textarea" v-model="patent.abstract" :rows="4" />
             </el-form-item>
 
             <el-form-item label="附件上传" prop="evidence">
@@ -117,16 +114,16 @@ export default {
 
   data() {
     return {
-      paper: reactive({
+      patent: {
         title: '',
         author: '',
         submissionDate: '',
         abstract: '',
         situation: ''
-      }),
+      },
 
       rules: {
-        title: [{ required: true, message: '请填写论文标题', trigger: 'blur' }],
+        title: [{ required: true, message: '请填写专利标题', trigger: 'blur' }],
         author: [{ required: true, message: '请填写作者信息', trigger: 'blur' }],
         submissionDate: [{ required: true, message: '请选择提交日期', trigger: 'change' }],
         situation: [{ required: true, message: '请填写专利状态', trigger: 'blur' }],
@@ -214,19 +211,28 @@ export default {
           }
       },
 
+      editRecord(patentId) {
+        console.log(patentId);
+        this.$router.push({ name: 'ChangePatentwork', params: { id: patentId } });
+    },
+
     deleteRecord(nowpatent_id) {
-            console.log('delete record');
-            const pap_id = this.parseToInt(nowpatent_id);
-            const res = api.deleteRecord({ patent_id: pap_id });
-            console.log(res);
-            console.log(res.code);
-            if (res.code === 200) {
-                const index = this.HistoryRecord.findIndex((record) => record.patent_id === pap_id);
-                if (index !== -1) {
-                    this.HistoryRecord.splice(index, 1);
-                }
-            }
-        },
+        console.log(nowpatent_id);
+        console.log('delete record');
+        const patent_id = this.parseToInt(nowpatent_id);
+
+        // Using an arrow function for the API call
+        const res = api.deleteRecord({ patent_id: patent_id });
+        res.then(() => {
+            console.log("成功了"); // "Success"
+        }).catch(() => {
+            console.log("错误了"); // "Error"
+        });
+
+        // Asynchronous operation, this line will execute before the Promise settles
+        console.log(res);
+    },
+
   },
 
   mounted() {

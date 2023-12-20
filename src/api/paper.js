@@ -24,8 +24,17 @@ const deleteRecord = (params) => {
     })
 }
 
+const changeRecord = (params) => {
+    return request({
+        url: '/api/paper/changepaper',
+        method: 'post',
+        params
+    })
+}
+
 export default {
     submitCreate,
     getRecord,
-    deleteRecord
+    deleteRecord,
+    changeRecord
 }

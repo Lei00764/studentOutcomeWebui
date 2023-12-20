@@ -1,20 +1,6 @@
-<script setup>
-import {computed, onBeforeMount, reactive, watch} from 'vue'
-import {ElMessage, ElMessageBox, ElUpload, ElDialog, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton} from "element-plus";
-import { ref } from 'vue'
-import { ElTable } from 'element-plus'
-import api from '@/api/paper'
-import globalData from "@/global/global"
-import router from "@/router";
-
-
-
-
-</script>
-
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">论文填报</h1>
+        <h1 class="pageTitle">论文修改</h1>
         <div class="helpText">
             帮助：在本页面中，您可以新建、修改论文申报信息。
         </div>
@@ -65,58 +51,19 @@ import router from "@/router";
                 <el-button class="submit-button-cancel">取消</el-button>
             </el-form-item>
         </el-form>
-
-
-        <h1 class="pageTitle">历史填报</h1>
-
-        <el-space wrap>
-            <el-card v-for="record in HistoryRecord" :key="record.paperId" class="box-card" style="width: 250px">
-                <template #header>
-                <div class="card-header">
-                    <div class="header-left">
-                    <span>{{ record.title }}</span>
-                    </div>
-                    <div class="header-right">
-                    <el-button class="button" text @click="editRecord(record.paperId)" type="primary">修改</el-button>
-                    <el-button class="button" text @click="deleteRecord(record.paperId)" type="danger">删除</el-button>
-                    </div>
-                </div>
-                </template>
-                <div class="text item">
-                  <p><strong>提交日期: </strong>{{ record.submissionDate }}</p>
-                  <p><strong>作者: </strong>{{ record.paper_author }}</p>
-                  <p><strong>审核状态: </strong>
-                      <span v-if="record.auditStatus === 'failed'" style="color: red;">审核失败</span>
-                        <span v-else-if="record.auditStatus === 'passed'" style="color: green;">审核通过</span>
-                      <span v-else style="color: gray;">未审核</span>
-                  </p>
-                  <!-- 显示附件 -->
-                  <img :src="record.evidence" alt="证据图片">
-                </div>
-            </el-card>
-        </el-space>
-
-        <el-col>
-            <p class="sectionTitle">操作日志</p>
-        </el-col>
-        <el-timeline>
-            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.time">
-                {{ activity.msg }}
-            </el-timeline-item>
-        </el-timeline>
-
     </div>
-
 </template>
 
-<script>
 
+<script>
+import { Plus } from '@element-plus/icons-vue';
 import api from '@/api/paper';
 
 export default {
   name:'paperView',
   data() {
     return {
+        paperId: null,
       paper: {
         title: '',
         author: '',
@@ -139,8 +86,6 @@ export default {
         disabled: false,
       },
 
-      HistoryRecord: [],
-
       operationLogs: [],
 
       fileList: [],
@@ -149,6 +94,11 @@ export default {
   },
   
   methods: {
+    getPaperIdFromRoute() {
+            this.paperId = this.$route.params.id;
+            // 使用 this.volId 来访问传递过来的 paperId
+        },
+
     onSubmit() {
         // 提交论文申报日志
         console.log('submit!');
@@ -191,57 +141,13 @@ export default {
       return parsedValue;
     },
 
-    async getHistoryRecord(value) {
-          const userid = this.parseToInt(value);
-          try {
-              const res = await api.getRecord({ user_id: userid });
-              if (res.status === 200) {
-                  console.log('success');
-                  this.HistoryRecord = res.data.data.map((record) => ({
-                    //右边是apifox变量，左边是自己设的变量(和上文的函数要相对应)
-                      submissionDate: record.submissionDate,
-                      author: record.paper_author,
-                      title: record.paper_title,
-                      evidence: record.evidence,
-                      auditStatus: record.paper_situation,
-                      paperId: record.paper_id,
-                      abstract: record.paper_abstract,
-                  }));
-              }
-          } catch (err) {
-              console.log('fail');
-              console.log(err);
-          }
-      },
-
-    editRecord(paperId) {
-        console.log(paperId);
-        this.$router.push({ name: 'ChangePaperwork', params: { id: paperId } });
+    created() {
+        this.getPaperIdFromRoute();
+        // 在这里可以进行其他初始化操作
     },
 
-    deleteRecord(nowpaper_id) {
-        console.log(nowpaper_id);
-        console.log('delete record');
-        const paper_id = this.parseToInt(nowpaper_id);
-
-        // Using an arrow function for the API call
-        const res = api.deleteRecord({ paper_id: paper_id });
-        res.then(() => {
-            console.log("成功了"); // "Success"
-        }).catch(() => {
-            console.log("错误了"); // "Error"
-        });
-
-        // Asynchronous operation, this line will execute before the Promise settles
-        console.log(res);
-    },
-  },
-
-  mounted() {
-        this.getHistoryRecord(2);
-    },
-
-};
+    }
+}
 </script>
 
 <style scoped>
