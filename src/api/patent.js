@@ -2,39 +2,39 @@ import request from "@/utils/request"
 
 const submitCreate = (params) => {
     return request({
-        url: '/api/Volunteers/selectStuRecord',
+        url: '/api/patent/insertPatents',
         method: 'post',
         params
     })
 }
 
-const getRecord = () => {
-    console.log("到了打印部分")
+const getRecord = (params) => {
     return request({
-        url: '/api/volunteer/selectVolunteerInfo',
-        method: 'get',            
-    });
-};
-
+        url: '/api/patent/selectStuRecord',
+        method: 'get',
+        params
+    })
+}
 
 const deleteRecord = (params) => {
     return request({
-        url: '/api/volunteer/deleteVolunteerInfo',
+        url: '/api/patent/deleteStuRecord',
         method: 'post',
         params
     })
 }
 
-const chanegRecord = (params) => {
+const changeRecord = (params) => {
     return request({
-        url: '/api/volunteer/changeVolunteerInfo',
+        url: '/api/patent/changepatent',
         method: 'post',
         params
     })
 }
+
 export default {
     submitCreate,
     getRecord,
     deleteRecord,
-    chanegRecord
+    changeRecord
 }

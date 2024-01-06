@@ -1,30 +1,30 @@
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">志愿服务修改</h1>
+        <h1 class="pageTitle">社会服务修改</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以修改志愿服务信息。
+            帮助：在本页面中，您可以修改社会服务信息。
         </div>
-        <el-form :model="volunteers" label-width="120px" status-icon :rules="rules">
+        <el-form :model="socialworks" label-width="120px" status-icon :rules="rules">
 
-            <el-form-item label="志愿服务名称" style="width: 500px" prop="name">
-                <el-input v-model="volunteers.VOL_name" />
+            <el-form-item label="社会服务名称" style="width: 500px" prop="name">
+                <el-input v-model="socialworks.social_name" />
             </el-form-item>
 
             <el-form-item label="日期选择器" prop="time">
                 <div class="demo-date-picker">
                     <div class="block">
-                        <el-date-picker v-model="volunteers.participate_time" type="date" placeholder="请选择日期" />
+                        <el-date-picker v-model="socialworks.participate_time" type="date" placeholder="请选择日期" />
                     </div>
                 </div>
             </el-form-item>
 
             <el-form-item label="时长" class="duration-input" prop="duration">
-                <el-input v-model="volunteers.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
-                <el-input v-model="volunteers.duration_hour" placeholder="小时" clearable />
+                <el-input v-model="socialworks.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
+                <el-input v-model="socialworks.duration_hour" placeholder="小时" clearable />
             </el-form-item>
 
-            <el-form-item label="志愿服务类型" prop="volType">
-                <el-select v-model="volunteers.vol_type" placeholder="请选择">
+            <el-form-item label="社会服务类型" prop="socialType">
+                <el-select v-model="socialworks.social_type" placeholder="请选择">
                     <el-option label="校级" value="校级"></el-option>
                     <el-option label="市级" value="市级"></el-option>
                     <el-option label="省级" value="省级"></el-option>
@@ -32,8 +32,8 @@
                 </el-select>
             </el-form-item>
 
-            <el-form-item label="详细描述" prop="volDetails">
-                <el-input v-model="volunteers.vol_detail" type="textarea" :rows="4" placeholder="请输入详细描述"></el-input>
+            <el-form-item label="详细描述" prop="socialDetails">
+                <el-input v-model="socialworks.social_detail" type="textarea" :rows="4" placeholder="请输入详细描述"></el-input>
             </el-form-item>
 
             <el-form-item label="佐证材料" prop="evidence">
@@ -77,12 +77,12 @@
 
 <script>
 import { Plus } from '@element-plus/icons-vue';
-import api from '@/api/volunteers';
+import api from '@/api/socialWork';
 export default {
 
     data() {
         return {
-            volId: null,
+            socialId: null,
             rules: {
                 name: [
                     { required: true, message: '名字不能为空', trigger: 'blur' },
@@ -95,8 +95,8 @@ export default {
                     { required: true, message: '时长不能为空', trigger: 'blur' },
                 ],
             },
-            volunteers: {
-                VOL_name: '',
+            socialworks: {
+                social_name: '',
                 participate_time: '',
                 duration_day: '',
                 duration_hour: '',
@@ -111,23 +111,23 @@ export default {
         };
     },
     methods: {
-        getVolunteerIdFromRoute() {
-            this.volId = this.$route.params.id;
-            // 使用 this.volId 来访问传递过来的 volId
+        getsocialunteerIdFromRoute() {
+            this.socialId = this.$route.params.id;
+            // 使用 this.socialId 来访问传递过来的 socialId
         },
         onSubmit() {
             console.log('submit!');
             console.log(this.evidenceCheck.dialogImageUrl);
 
             api.submitCreate({
-                VOL_name: this.volunteers.VOL_name,
-                participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
-                duration_day: this.parseToInt(this.volunteers.duration_day),
-                duration_hour: this.parseToInt(this.volunteers.duration_hour),
+                social_name: this.socialworks.social_name,
+                participate_time: new Date(this.socialworks.participate_time).toISOString().split('T')[0],
+                duration_day: this.parseToInt(this.socialworks.duration_day),
+                duration_hour: this.parseToInt(this.socialworks.duration_hour),
                 evidence: this.evidenceCheck.dialogImageUrl,
-                vol_type: this.volunteers.vol_type,
-                vol_detail: this.volunteers.vol_detail, // 新添加的字段
-                id: this.volId
+                social_type: this.socialworks.social_type,
+                social_detail: this.socialworks.social_detail, // 新添加的字段
+                social_id: this.socialId
             })
                 .then((res) => {
                     console.log(res.status);
@@ -157,7 +157,7 @@ export default {
         },
     },
     created() {
-        this.getVolunteerIdFromRoute();
+        this.getsocialunteerIdFromRoute();
         // 在这里可以进行其他初始化操作
     },
 };

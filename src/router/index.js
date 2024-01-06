@@ -76,19 +76,44 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "paper",
+                    name: "paperView",
+                    component: ()=>import("@/views/paper/paperView.vue"),
+                },
+                {
+                    path: "ChangePaperwork",
+                    name: "ChangePaperwork",
+                    component: ()=>import("@/views/paper/ChangePaperwork.vue"),
+                },
+                {
+                    path: "patent",
+                    name: "patentView",
+                    component: ()=>import("@/views/patent/patentView.vue"),
+                },
+                {
+                    path: "ChangePatentwork",
+                    name: "ChangePatentwork",
+                    component: ()=>import("@/views/patent/ChangePatentwork.vue"),
+                },
+                {
                     path: "volunteers",
                     name: "volunteersView",
-                    component: ()=>import("@/views/volunteer/reviewVolunteers.vue"),
+                    component: ()=>import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
                     path: "socialWork",
                     name: "socialWork",
-                    component: ()=>import("@/views/social/socialWork.vue"),
+                    component: ()=>import("@/views/social/SocialWork.vue"),
                 },
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
                     component: ()=>import("@/views/volunteer/changeVolunteers.vue"),
+                },
+                {
+                    path: "changeSocialworks",
+                    name: "changeSocialworks",
+                    component: ()=>import("@/views/social/ChangeSocialwork.vue"),
                 },
             ]
         },

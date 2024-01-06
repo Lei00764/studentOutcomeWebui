@@ -66,6 +66,8 @@ loginApi.getUserInfo().then(response => {
     menus.v = [
         {"title":"首页","icon":"fi-rr-home","path":"/"},
         {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
+        {"title":"论文填报","icon":"fi-rr-file","path":"/paper"},
+        {"title":"专利填报","icon":"fi-rr-bulb","path":"/patent"},
         {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
         {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
         {"title":"审核参赛信息","icon":"fi-rr-trophy", "path":"/competitionCheck"},

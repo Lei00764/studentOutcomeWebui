@@ -13,7 +13,7 @@
           </el-card-header>
           <el-card-body>
             <p>参与时间: {{ item.participateTime }}</p>
-            <p>志愿者详情: {{ item.volDetails }}</p>
+            <p>社会者详情: {{ item.volDetails }}</p>
             <p>审核状态: {{ item.auditStatus }}</p>
             <p>持续时间: {{ item.durationDay }}天 {{ item.durationHour }}小时</p>
             <p>审核证据: {{ item.evidence }}</p>
