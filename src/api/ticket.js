@@ -7,8 +7,10 @@ const createTicket = () => {
     })
 }
 
-const replyTicket = () => {
+const replyTicket = (ticket_id, content) => {
     return request.post("/api/ticket/replyTicket", {
+        ticket_id: ticket_id,
+        content, content
     })
 }
 
@@ -17,8 +19,29 @@ const closeTicket = () => {
     })
 }
 
+const getTicketList = () => {
+    return request.post("/api/ticket/getTicketList")
+}
+
+const getTicketInfo = (ticket_id) => {
+    return request.post("/api/ticket/getTicketInfo",
+        {
+            ticket_id: ticket_id
+        })
+}
+
+const getTicketContentList = (ticket_id) => {
+    return request.post("/api/ticket/getTicketContentList",
+        {
+            ticket_id: ticket_id
+        })
+}
+
 export default {
     createTicket,
     replyTicket,
-    closeTicket
+    closeTicket,
+    getTicketList,
+    getTicketInfo,
+    getTicketContentList
 }

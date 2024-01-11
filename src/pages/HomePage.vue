@@ -84,7 +84,7 @@ loginApi.getUserInfo().then(response => {
             menus.v = [
                 { "title": "首页", "icon": "fi-rr-home", "path": "/" },
                 { "title": "审核参赛信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
-                { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
+                { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
             ]
     }
