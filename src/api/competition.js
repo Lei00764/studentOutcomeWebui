@@ -14,7 +14,7 @@ const editApi = {
         return request.post("/api/competition/termPrize", {term_id: termId})
     },
     createNewTeam: (competitionId, termId, prizeId, awardDate, desc) => {
-        let dateStr = awardDate.getFullYear() + "-" + awardDate.getMonth() + "-" + awardDate.getDate();
+        let dateStr = awardDate.getFullYear() + "-" + (awardDate.getMonth() + 1) + "-" + awardDate.getDate();
         return request.post("/api/competition/createNewTeam", {
             competition_id: competitionId,
             term_id: termId,

@@ -25,11 +25,12 @@ const reloadPage = () => {
         competition.value = res.json.competition
         queryForm.competitionId = competition.value.id
         competitionType.value = competition.value.type_name;
-        organizer.value = competition.value.organizer;
+
 
         term.value = res.json.term
         queryForm.termId = term.value.id
         termLevelName.value = term.value.level_name
+        organizer.value = term.value.organizer;
 
         prize.value = res.json.prize
         queryForm.prizeId = prize.value.id
@@ -125,7 +126,7 @@ const teammateRowClassName = ({row, rowIndex}) => {
             border
         >
             <el-descriptions-item label="竞赛名称">
-                {{ competition.name }}
+                {{ competition.competition_name }}
             </el-descriptions-item>
             <el-descriptions-item label="竞赛届数">
                 {{ term.name }}
@@ -149,7 +150,7 @@ const teammateRowClassName = ({row, rowIndex}) => {
                 <el-tag :type="statusCodeList[statusCode].tagType">{{statusCodeList[statusCode].name}}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item :span="4" label="证书">
-                <el-image style="max-width: 800px; max-height: 200px; margin-top:10px"
+                <el-image style="max-width: 800px; margin-top:10px"
                           fit="contain" :src="certUrl" :preview-src-list="[certUrl]"/>
             </el-descriptions-item>
             <el-descriptions-item :span="4" label="描述">

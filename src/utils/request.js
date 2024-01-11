@@ -26,8 +26,8 @@ service.interceptors.response.use(function (response) {
             response: response,
             errorCode: response.data.code,
             defaultHandler: (prefix) =>{
-                if(response.data.message){
-                    ElMessage.error((prefix ? prefix : "错误") + ": " + response.data.message)
+                if(response.data.msg){
+                    ElMessage.error((prefix ? prefix : "错误") + ": " + response.data.msg)
                     return;
                 }
                 console.log(response.data.code)

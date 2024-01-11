@@ -173,13 +173,13 @@ const goViewTeam = (row) => {
     router.push("/competition/view/" + row.team_id)
 }
 
-const withdrawTeam = (selectedTeamId) => {
+const withdrawTeam = (selectedTeam) => {
     ElMessageBox.confirm("确认要撤回审核请求？重新审核需要重新排队。", "撤回审核申请",
         {
             type: 'warning',
             confirmButtonText: '撤回'
         }).then(()=>{
-        api.viewApi.withdrawSubmittedTeam(selectedTeamId).then(res => {
+        api.viewApi.withdrawSubmittedTeam(selectedTeam.team_id).then(res => {
             ElMessage.success("已撤回所选参赛信息的审核请求。")
             setTimeout(()=>{
                 getCompetitionTeam()
@@ -271,7 +271,7 @@ const withdrawTeam = (selectedTeamId) => {
                         <el-button link type="primary" size="small" @click="goStartEdit(scope.row)"
                                    v-if="scope.row.status_code===0 || scope.row.status_code===3"
                         >编辑</el-button>
-                        <el-button link type="primary" size="small" @click="leaveTeam(scope.row.id)"
+                        <el-button link type="primary" size="small" @click="leaveTeam(scope.row.team_id)"
                                    v-if="scope.row.status_code===0 || scope.row.status_code===3"
                         >退出队伍</el-button>
                         <el-button link type="primary" size="small" @click="goViewTeam(scope.row) " v-else>查看</el-button>
