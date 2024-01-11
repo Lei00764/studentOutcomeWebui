@@ -8,6 +8,7 @@ import {onBeforeMount, onMounted, reactive, ref, watch} from "vue";
 import UserInfoCard from "@/components/UserInfoCard.vue";
 import globalData from "@/global/global"
 import {ElMenuItem, ElSubMenu} from "element-plus";
+import NotificationPopup from "@/components/NotificationPopup.vue";
 
 function loginButtonClicked () {
     router.push("/login")
@@ -63,16 +64,26 @@ loginApi.getUserInfo().then(response => {
     isLogin.value = true;
     gotUserInfo.value = true
 
-    menus.v = [
-        {"title":"首页","icon":"fi-rr-home","path":"/"},
-        {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
-        {"title":"论文填报","icon":"fi-rr-file","path":"/paper"},
-        {"title":"专利填报","icon":"fi-rr-bulb","path":"/patent"},
-        {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
-        {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
-        {"title":"审核参赛信息","icon":"fi-rr-trophy", "path":"/competitionCheck"},
-        {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
-    ]
+    switch(responseObj.group_id){
+        case 2:
+            menus.v = [
+                {"title":"首页","icon":"fi-rr-home","path":"/"},
+                {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
+                {"title":"论文填报","icon":"fi-rr-file","path":"/paper"},
+                {"title":"专利填报","icon":"fi-rr-bulb","path":"/patent"},
+                {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
+                {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
+
+                {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
+            ]
+            break;
+        case 3:
+            menus.v = [
+                {"title":"首页","icon":"fi-rr-home","path":"/"},
+                {"title":"审核参赛信息","icon":"fi-rr-trophy", "path":"/competitionCheck"},
+                {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
+            ]
+    }
     loadComplete.value = false;
     // 等菜单卸载完了再改回来
     setTimeout(()=>{
@@ -136,6 +147,19 @@ watch(router.currentRoute, () => {
                 学生成果填报系统
             </div>
             <div class="rightTitle" v-if="isLogin">
+                <el-popover :width="360"
+                            popper-style="box-shadow: 0 5px 20px hsla(0,0%,7%,.1);padding: 0; transition: opacity 0.3s;"
+                            trigger="click" @before-enter="updateNotifications">
+                    <template #reference>
+                        <LinkButtonWithIcon font-color="#fff" text="消息通知" icon="fi-rr-bell"
+                                            :has-notification="userInfo.data.unread_notification" @click="notificationButtonClicked">
+                        </LinkButtonWithIcon>
+                    </template>
+                    <template #default>
+                        <NotificationPopup ref="notificationBox"></NotificationPopup>
+                    </template>
+                </el-popover>
+
                 <div class="line">
                 </div>
                 <LinkButtonWithIcon font-color="#fff" text="退出" icon="" @click="exitButtonClicked"></LinkButtonWithIcon>

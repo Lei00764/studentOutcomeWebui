@@ -18,7 +18,7 @@ const getUserInfo = () => {
 }
 
 const updatePassword = (oldPassword, newPassword) => {
-    return request.post("/api/studentInfo/updatePasswordStudent",{
+    return request.post("/api/studentInfo/changePasswordStudent",{
         new_password: newPassword,
         old_password: oldPassword
     })

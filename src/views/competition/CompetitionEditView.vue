@@ -40,12 +40,12 @@ const reloadPage = () => {
         competitions.value = [competition]
         queryForm.competitionId = competition.id
         competitionType.value = competition.type_name;
-        organizer.value = competition.organizer;
 
         let term = res.json.term
         loadTerms()
         queryForm.termId = term.id
         termLevelName.value = term.level_name
+        organizer.value = term.organizer;
 
         let prize = res.json.prize
         onTermSelected()
@@ -209,13 +209,17 @@ const onSaveButtonClicked = ()=>{
             postDataTeammates.push({user_id:teammate.user_id, order:teammate.order})
         }
 
+        let stringDate = queryForm.awardDate;
+        if(stringDate.getFullYear){
+            stringDate = queryForm.awardDate.getFullYear() + "-" + (queryForm.awardDate.getMonth() + 1) +"-" + queryForm.awardDate.getDate()
+        }
         api.editApi.editTeam(
             teamId,
             infoNotChanged.value ? null : {
                 competition_id: queryForm.competitionId,
                 term_id: queryForm.termId,
                 prize_id: queryForm.prizeId,
-                award_date: queryForm.awardDate,
+                award_date: stringDate,
                 desc: queryForm.desc,
             },
             teammatesNotChanged.value ? null : postDataTeammates
@@ -591,7 +595,7 @@ const cancelVerified = (row) => {
 
         </el-table>
         <div class="operationButtons" v-if="pageMode==='teamNew' || pageMode==='teamEdit'">
-            <el-button type="primary" @click="onSaveButtonClicked" :disabled="infoNotChanged && teammatesNotChanged">保存草稿</el-button>
+            <el-button type="primary" @click="onSaveButtonClicked" :disabled="infoNotChanged && teammatesNotChanged && !isCertImageChanged">保存草稿</el-button>
             <el-button type="primary" @click="onSubmitButtonClicked" v-if="pageMode!=='teamNew'">提交审核</el-button>
         </div>
 
