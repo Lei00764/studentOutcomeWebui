@@ -118,7 +118,18 @@ const router = createRouter({
                 {
                     path: "ticket",
                     name: "ticket",
-                    component: () => import("@/views/ticket/FillTicket.vue")
+                    children: [
+                        {
+                            path: "",
+                            name: "ticketHomeView",
+                            component: () => import("@/views/ticket/FillTicket.vue"),
+                        },
+
+                        {
+                            path: "view/:ticketId",
+                            name: "ticketView",
+                            component: () => import("@/views/ticket/TicketView.vue")
+                        },]
                 },
                 {
                     path: "notice",
