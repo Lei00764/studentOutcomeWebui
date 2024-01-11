@@ -119,6 +119,11 @@ const router = createRouter({
                     path: "ticket",
                     name: "ticket",
                     component: () => import("@/views/ticket/FillTicket.vue")
+                },
+                {
+                    path: "notice",
+                    name: "notice",
+                    component: () => import("@/views/notice/SendNotice.vue")
                 }
             ]
         },

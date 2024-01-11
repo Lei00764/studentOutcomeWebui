@@ -1,26 +1,19 @@
 import request from "@/utils/request"
 
-const createTicket = (params) => {
-    return request({
-        url: '/api/ticket/createTicket',
-        method: 'post',
-        params
+
+const createTicket = () => {
+    return request.post("/api/ticket/createTicket", {
+        // content: content,
     })
 }
 
-const replyTicket = (params) => {
-    return request({
-        url: '/api/ticket/replyTicket',
-        method: 'post',
-        params
+const replyTicket = () => {
+    return request.post("/api/ticket/replyTicket", {
     })
 }
 
-const closeTicket = (params) => {
-    return request({
-        url: '/api/ticket/closeTicket',
-        method: 'post',
-        params
+const closeTicket = () => {
+    return request.post("/api/ticket/closeTicket", {
     })
 }
 
