@@ -1,11 +1,11 @@
 <script setup>
-import {reactive, ref} from "vue";
+import { reactive, ref } from "vue";
 import router from "@/router";
 import axios from "axios";
 
-const showingMessages = reactive({data:[]})
+const showingMessages = reactive({ data: [] })
 
-const messages = reactive({data:[]})
+const messages = reactive({ data: [] })
 const isLoading = ref(false);
 
 const showMsg = ref(true)
@@ -16,16 +16,17 @@ const toggleExpended = () => {
     isExpended.value = !isExpended.value
     showMsg.value = false
     copyShowingMsg()
-    setTimeout(()=>{
+    setTimeout(() => {
         showMsg.value = true
-    },0)
+    }, 0)
 }
 
 // 将要展示的msg复制到showingMessages
 const copyShowingMsg = () => {
     showingMessages.data = []
-    for(let msg of messages.data){
-        if(isExpended.value || msg.unread){
+    for (let msg of messages.data) {
+        // console.log(msg)
+        if (isExpended.value || !msg.is_read) {
             showingMessages.data.push(msg)
         }
     }
@@ -34,29 +35,32 @@ const copyShowingMsg = () => {
 const getNotification = () => {
     isLoading.value = true
     isExpended.value = false
-    axios.get("/api/Notification",{doNotShowLoadingScreen: true}).then((res) => {
+    axios.get("/api/notice/getPersonalNotice", { doNotShowLoadingScreen: true }).then((res) => {
         isLoading.value = false;
         showMsg.value = false;
-        messages.data = res.json.notifications;
+        // console.log(res)
+        messages.data = res.data.data.noticeList;
         copyShowingMsg()
-        setTimeout(()=>{
+        // console.log(messages.data)
+        // console.log(showingMessages.data)
+        setTimeout(() => {
             showMsg.value = true
-        },0)
+        }, 0)
     }).catch(error => {
-        if(error.network) return;
+        if (error.network) return;
         error.defaultHandler("消息加载失败");
     })
 }
 
-defineExpose({getNotification})
+defineExpose({ getNotification })
 const goUrl = (url) => {
-    if(url) router.push("/" + url);
+    if (url) router.push("/" + url);
 }
 
 const clearMessages = () => {
     messages.data = [];
     showingMessages.data = [];
-    axios.get("/api/Notification/Clear",{doNotShowLoadingScreen: true})
+    axios.get("/api/notice/clearPersonalNotice", { doNotShowLoadingScreen: true })
 }
 </script>
 
@@ -65,31 +69,35 @@ const clearMessages = () => {
         消息通知
     </p>
     <div class="messageWrapper">
-        <p class="messagePlaceHolder" v-if="showingMessages.data.length===0">
+        <p class="messagePlaceHolder" v-if="showingMessages.data.length === 0">
             {{
-                (()=>{
-                    if(isLoading) return "加载中"
-                    if(messages.data.length===0) return "没有消息"
-                    if(showingMessages.data.length===0) return "没有新消息"
+                (() => {
+                    if (isLoading) return "加载中"
+                    if (messages.data.length === 0) return "没有消息"
+                    if (showingMessages.data.length === 0) return "没有新消息"
                 })()
 
             }}
         </p>
-        <div class="messageEntry" v-if="showMsg" v-for="item of showingMessages.data" :class="{clickable:item.url}" @click="goUrl(item.url)">
+        <div class="messageEntry" v-if="showMsg" v-for="item of showingMessages.data" :class="{ clickable: item.url }"
+            @click="goUrl(item.url)">
             <div class="content">
                 <span class="dotWrapper" v-if="item.unread">
                     <span class="unreadDot"></span>
                 </span>
-                <span>{{item.message}}</span>
+                <span>{{ item.content }}</span>
+                <!-- <span>{{ item.send_time }}</span> -->
             </div>
             <div class="goButton" v-if="item.url">
                 <i class="fi fi-rr-angle-small-right centerIcon"></i>
             </div>
         </div>
     </div>
-    <p class="messageControls" v-if="messages.data.length>0">
+    <p class="messageControls" v-if="messages.data.length > 0">
         <el-button class="clearButton" @click="toggleExpended" link>
-            <i class="fi centerIcon" :class="{'fi-rr-angle-down': !isExpended, ' fi-rr-angle-up':isExpended}"></i><span>{{isExpended?"收起":"展开全部"}}</span>
+            <i class="fi centerIcon"
+                :class="{ 'fi-rr-angle-down': !isExpended, ' fi-rr-angle-up': isExpended }"></i><span>{{ isExpended ? "收起" :
+                    "展开全部" }}</span>
         </el-button>
         <el-button class="clearButton" @click="clearMessages" link>
             <i class="fi fi-rr-trash centerIcon"></i><span>清除已读消息</span>
@@ -98,13 +106,13 @@ const clearMessages = () => {
 </template>
 
 <style scoped>
-.title{
+.title {
     padding: 15px;
     text-align: center;
     border-bottom: 1px solid #ccc;
 }
 
-.messageWrapper{
+.messageWrapper {
     max-height: 300px;
     overflow: hidden auto;
 }
@@ -119,7 +127,7 @@ const clearMessages = () => {
     border-radius: 5px;
 }
 
-.messageEntry{
+.messageEntry {
     min-width: 50px;
     padding: 15px;
     transition: 0.2s ease-in-out;
@@ -142,35 +150,36 @@ const clearMessages = () => {
     content: "";
 }
 
-.messageEntry:hover{
-    background-color: rgb(246,246,246);
+.messageEntry:hover {
+    background-color: rgb(246, 246, 246);
 }
 
-.messageEntry.clickable{
+.messageEntry.clickable {
     cursor: pointer;
 }
 
-.messagePlaceHolder{
+.messagePlaceHolder {
     padding: 40px 15px;
     text-align: center;
     color: #ccc;
 }
 
-.goButton{
+.goButton {
     display: flex;
     align-items: center;
     margin-left: 3px;
 }
 
-.goButton i{
+.goButton i {
     margin: 0;
     transition: 0.3s ease-in-out;
 }
 
-.messageEntry:hover i{
+.messageEntry:hover i {
     transform: translateX(3px);
 }
-.dotWrapper{
+
+.dotWrapper {
     height: 1.4em;
     margin-right: 10px;
     display: inline-flex;
@@ -178,7 +187,7 @@ const clearMessages = () => {
     vertical-align: text-top;
 }
 
-.unreadDot{
+.unreadDot {
     height: 6px;
     width: 6px;
     display: block;
@@ -186,13 +195,13 @@ const clearMessages = () => {
     border-radius: 50%;
 }
 
-.messageControls{
+.messageControls {
     text-align: center;
     padding: 10px;
     border-top: 1px solid #ccc;
 }
 
-.messageControls>button{
+.messageControls>button {
     font-weight: 400;
     color: #999;
 }
