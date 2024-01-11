@@ -1,16 +1,16 @@
 <script setup>
 
 import LinkButtonWithIcon from "@/components/LinkButtonWithIcon.vue";
-import {changeTheme} from "@/assets/changeTheme";
+import { changeTheme } from "@/assets/changeTheme";
 import router from "@/router";
 import loginApi from "@/api/login";
-import {onBeforeMount, onMounted, reactive, ref, watch} from "vue";
+import { onBeforeMount, onMounted, reactive, ref, watch } from "vue";
 import UserInfoCard from "@/components/UserInfoCard.vue";
 import globalData from "@/global/global"
-import {ElMenuItem, ElSubMenu} from "element-plus";
+import { ElMenuItem, ElSubMenu } from "element-plus";
 import NotificationPopup from "@/components/NotificationPopup.vue";
 
-function loginButtonClicked () {
+function loginButtonClicked() {
     router.push("/login")
 }
 
@@ -18,9 +18,9 @@ const menuItemClick = (ke) => {
     router.push(ke.index)
 }
 
-const exitButtonClicked = async ()=>{
+const exitButtonClicked = async () => {
     await loginApi.logout();
-    window.location.href ="/";
+    window.location.href = "/";
 }
 
 const notificationBox = ref();
@@ -28,28 +28,30 @@ const notificationButtonClicked = () => {
     userInfo.data.unread_notification = false;
 }
 
-const updateNotifications = () =>{
+const updateNotifications = () => {
     notificationBox.value.getNotification();
 }
 
-const avatarClicked = () =>{
-    if(!isLogin.value){
+const avatarClicked = () => {
+    if (!isLogin.value) {
         router.push("/login")
     }
 }
 
-const menus = reactive({v:[
-        {"title":"首页","icon":"fi-rr-home","path":"/"},
-    ]});
+const menus = reactive({
+    v: [
+        { "title": "首页", "icon": "fi-rr-home", "path": "/" },
+    ]
+});
 
 let userInfo = reactive({
-    data:{
-        user_phone:"",
-        user_name:"未登录",
-        user_id:123456,
-        user_group:"none",
-        avatar_url:"/webstatic/defaultAvatar.png",
-        unread_notification:false,
+    data: {
+        user_phone: "",
+        user_name: "未登录",
+        user_id: 123456,
+        user_group: "none",
+        avatar_url: "/webstatic/defaultAvatar.png",
+        unread_notification: false,
         verified: false
     }
 
@@ -64,37 +66,39 @@ loginApi.getUserInfo().then(response => {
     isLogin.value = true;
     gotUserInfo.value = true
 
-    switch(responseObj.group_id){
+    switch (responseObj.group_id) {
         case 2:
             menus.v = [
-                {"title":"首页","icon":"fi-rr-home","path":"/"},
-                {"title":"竞赛填报","icon":"fi-rr-trophy","path":"/competition"},
-                {"title":"论文填报","icon":"fi-rr-file","path":"/paper"},
-                {"title":"专利填报","icon":"fi-rr-bulb","path":"/patent"},
-                {"title":"志愿服务","icon":"fi-rr-room-service" ,"path":"/volunteers"},
-                {"title":"社会活动","icon":"fi-rr-users" ,"path":"/socialWork"},
-
-                {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
+                { "title": "首页", "icon": "fi-rr-home", "path": "/" },
+                { "title": "竞赛填报", "icon": "fi-rr-trophy", "path": "/competition" },
+                { "title": "论文填报", "icon": "fi-rr-file", "path": "/paper" },
+                { "title": "专利填报", "icon": "fi-rr-bulb", "path": "/patent" },
+                { "title": "志愿服务", "icon": "fi-rr-room-service", "path": "/volunteers" },
+                { "title": "社会活动", "icon": "fi-rr-users", "path": "/socialWork" },
+                { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
+                { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
+                { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" }
             ]
             break;
         case 3:
             menus.v = [
-                {"title":"首页","icon":"fi-rr-home","path":"/"},
-                {"title":"审核参赛信息","icon":"fi-rr-trophy", "path":"/competitionCheck"},
-                {"title":"修改密码","icon":"fi-rr-key","path":"/user"},
+                { "title": "首页", "icon": "fi-rr-home", "path": "/" },
+                { "title": "审核参赛信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
+                { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
+                { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
             ]
     }
     loadComplete.value = false;
     // 等菜单卸载完了再改回来
-    setTimeout(()=>{
+    setTimeout(() => {
         loadComplete.value = true
-    },0)
+    }, 0)
     globalData.login = true;
     userInfo.data = responseObj
     globalData.userInfo = userInfo.data
 }).catch(error => {
-    if(error.network) return;
-    switch(error.errorCode){
+    if (error.network) return;
+    switch (error.errorCode) {
         case 600:
             router.push("/login")
             break;
@@ -106,9 +110,9 @@ loginApi.getUserInfo().then(response => {
 
 const getSidebarPath = () => {
     let path = router.currentRoute.value.path.split("/")
-    if(path.length === 1){
+    if (path.length === 1) {
         return ""
-    }else{
+    } else {
         return "/" + path[1];
     }
 
@@ -117,13 +121,13 @@ const getSidebarPath = () => {
 
 const menu = ref();
 let contentDom = undefined;
-onMounted(()=>{
-    (()=>{
+onMounted(() => {
+    (() => {
         let menuItemNow = getSidebarPath();
-        for(let item of menus.v){
-            if(!item.children) continue;
-            for(let child of item.children){
-                if(child.path===menuItemNow){
+        for (let item of menus.v) {
+            if (!item.children) continue;
+            for (let child of item.children) {
+                if (child.path === menuItemNow) {
                     menu.value.open(item.path);
                 }
             }
@@ -134,7 +138,7 @@ onMounted(()=>{
 
 
 watch(router.currentRoute, () => {
-    contentDom.scrollTo({left: 0, top: 0})
+    contentDom.scrollTo({ left: 0, top: 0 })
 })
 
 </script>
@@ -143,16 +147,16 @@ watch(router.currentRoute, () => {
     <div class="pageWrapper">
         <div class="headerHolder">
             <div class="leftTitle">
-<!--                <img alt="" src="../assets/logo.png">-->
+                <!--                <img alt="" src="../assets/logo.png">-->
                 学生成果填报系统
             </div>
             <div class="rightTitle" v-if="isLogin">
                 <el-popover :width="360"
-                            popper-style="box-shadow: 0 5px 20px hsla(0,0%,7%,.1);padding: 0; transition: opacity 0.3s;"
-                            trigger="click" @before-enter="updateNotifications">
+                    popper-style="box-shadow: 0 5px 20px hsla(0,0%,7%,.1);padding: 0; transition: opacity 0.3s;"
+                    trigger="click" @before-enter="updateNotifications">
                     <template #reference>
                         <LinkButtonWithIcon font-color="#fff" text="消息通知" icon="fi-rr-bell"
-                                            :has-notification="userInfo.data.unread_notification" @click="notificationButtonClicked">
+                            :has-notification="userInfo.data.unread_notification" @click="notificationButtonClicked">
                         </LinkButtonWithIcon>
                     </template>
                     <template #default>
@@ -177,21 +181,23 @@ watch(router.currentRoute, () => {
 
 
                 <el-menu v-if="loadComplete" :default-active="getSidebarPath()" class="sideBarMenu" ref="menu">
-                    <component v-for="item in menus.v" :is="item.children ? ElSubMenu : ElMenuItem" :index="item.path" v-on="item.children ? {}: {click: menuItemClick}">
+                    <component v-for="item in menus.v" :is="item.children ? ElSubMenu : ElMenuItem" :index="item.path"
+                        v-on="item.children ? {} : { click: menuItemClick }">
                         <template #title>
                             <i class="fi" :class="item.icon"></i>
-                            <span>{{item.title}}</span>
+                            <span>{{ item.title }}</span>
                         </template>
-                        <el-menu-item v-if="item.children" v-for="child in item.children" :index="child.path" @click="menuItemClick">
+                        <el-menu-item v-if="item.children" v-for="child in item.children" :index="child.path"
+                            @click="menuItemClick">
                             <i class="fi" :class="child.icon"></i>
-                            <span>{{child.title}}</span>
+                            <span>{{ child.title }}</span>
                         </el-menu-item>
                     </component>
                 </el-menu>
             </div>
 
             <div class="content">
-                <RouterView ></RouterView>
+                <RouterView></RouterView>
             </div>
         </div>
     </div>
@@ -199,8 +205,7 @@ watch(router.currentRoute, () => {
 
 
 <style scoped>
-
-.headerHolder{
+.headerHolder {
     width: 100%;
     height: 50px;
     box-sizing: border-box;
@@ -210,13 +215,14 @@ watch(router.currentRoute, () => {
     max-height: 50px;
     flex: 1;
 }
-.headerHolder>div{
+
+.headerHolder>div {
     display: flex;
     align-items: center;
     margin: 0 20px;
 }
 
-.pageWrapper{
+.pageWrapper {
     height: 100vh;
     width: 100%;
     min-width: 1200px;
@@ -231,22 +237,22 @@ watch(router.currentRoute, () => {
     margin-right: 20px;
 }
 
-.rightTitle img{
+.rightTitle img {
     height: 60px;
 }
 
-.rightTitle>*{
+.rightTitle>* {
     margin: 0 10px;
 }
 
-.line{
+.line {
     border-left: #fff 1px solid;
     height: 1em;
     width: 1px;
     margin: 0 5px;
 }
 
-.contentHolder{
+.contentHolder {
     display: flex;
     justify-items: stretch;
     flex: 3;
@@ -255,29 +261,29 @@ watch(router.currentRoute, () => {
 }
 
 
-.content{
+.content {
     overflow-y: auto;
     background-color: var(--el-color-primary-light-9);
     flex: 1;
 }
 
-.sideBar{
+.sideBar {
     width: 230px;
     min-width: 230px;
     max-width: 230px;
     flex: 3;
 }
 
-.sideBar .sideBarMenu{
+.sideBar .sideBarMenu {
     border-right: none;
 }
 
-.sideBar .sideBarMenu i{
+.sideBar .sideBarMenu i {
     margin-right: 10px;
     font-size: 1.1em;
 }
 
-.userInfoWrapper{
+.userInfoWrapper {
     padding: 10px 20px;
     border-bottom: 1px #eee solid;
 }
