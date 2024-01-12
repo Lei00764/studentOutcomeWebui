@@ -124,12 +124,16 @@ const router = createRouter({
                             name: "ticketHomeView",
                             component: () => import("@/views/ticket/TicketHome.vue"),
                         },
-
                         {
                             path: "view/:ticketId",
                             name: "ticketView",
                             component: () => import("@/views/ticket/TicketView.vue")
-                        },]
+                        },
+                        {
+                            path: "viewAdmin/:ticketId",
+                            name: "ticketViewAdmin",
+                            component: () => import("@/views/ticket/TicketViewAdmin.vue")
+                        }]
                 },
                 {
                     path: "reviewTicket",

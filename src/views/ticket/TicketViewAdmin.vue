@@ -14,21 +14,22 @@
 
         <div class="chat-content">
             <div v-for="(item, index) in ticketContentList.data" :key="index">
-                <!-- 管理员消息 -->
-                <div class="word admin" v-if="item.sender_type === 'admin'">
-                    <img src="/webstatic/admin.png">
-                    <div class="info">
-                        <p class="time">管理员 {{ formatDateTime(item.send_time) }}</p>
-                        <div class="info-content">{{ item.content }}</div>
-                    </div>
-                </div>
                 <!-- 学生消息 -->
-                <div class="word student" v-else>
+                <div class="word student" v-if="item.sender_type === 'student'">
+                    <img src="/webstatic/user.png">
+
                     <div class="info">
                         <p class="time">学生 {{ formatDateTime(item.send_time) }}</p>
                         <div class="info-content">{{ item.content }}</div>
                     </div>
-                    <img src="/webstatic/user.png">
+                </div>
+                <!-- 管理员消息 -->
+                <div class="word admin" v-else>
+                    <div class="info">
+                        <p class="time">管理员 {{ formatDateTime(item.send_time) }}</p>
+                        <div class="info-content">{{ item.content }}</div>
+                    </div>
+                    <img src="/webstatic/admin.png">
                 </div>
             </div>
         </div>
@@ -199,7 +200,7 @@ const formatDateTime = (isoString) => {
     }
 }
 
-.word.student {
+.word.admin {
     display: flex;
     justify-content: flex-end;
 

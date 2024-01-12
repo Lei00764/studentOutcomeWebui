@@ -69,7 +69,7 @@ const getAllTicketList = async () => {
 
 
 const goViewTicket = (row) => {
-    router.push("/ticket/view/" + row.ticket_id)
+    router.push("/ticket/viewAdmin/" + row.ticket_id)
 }
 
 const closeTicket = (row) => {
