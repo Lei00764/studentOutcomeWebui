@@ -41,11 +41,20 @@ const getTicketContentList = (ticket_id) => {
         })
 }
 
+/**
+ * 管理员获取所有工单
+ */
+const getAllTicketList = () => {
+    return request.post("/api/ticket/getAllTicketList")
+
+}
+
 export default {
     createTicket,
     replyTicket,
     closeTicket,
     getTicketList,
     getTicketInfo,
-    getTicketContentList
+    getTicketContentList,
+    getAllTicketList
 }
