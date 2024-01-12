@@ -122,7 +122,7 @@ const router = createRouter({
                         {
                             path: "",
                             name: "ticketHomeView",
-                            component: () => import("@/views/ticket/FillTicket.vue"),
+                            component: () => import("@/views/ticket/TicketHome.vue"),
                         },
 
                         {

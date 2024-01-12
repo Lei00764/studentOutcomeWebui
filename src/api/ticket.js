@@ -1,9 +1,12 @@
 import request from "@/utils/request"
 
 
-const createTicket = () => {
+const createTicket = (ticket_type, title, content) => {
+    console.log(ticket_type, title, content)
     return request.post("/api/ticket/createTicket", {
-        // content: content,
+        ticket_type: ticket_type,
+        title: title,
+        content: content,
     })
 }
 
@@ -14,8 +17,9 @@ const replyTicket = (ticket_id, content) => {
     })
 }
 
-const closeTicket = () => {
+const closeTicket = (ticket_id) => {
     return request.post("/api/ticket/closeTicket", {
+        ticket_id: ticket_id
     })
 }
 
