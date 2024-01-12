@@ -147,7 +147,14 @@ const checkApi = {
      */
     getTeamPageWithKeyword: (fields, pageNo) => {
         return request.post("/api/competition/check/getTeam",{
-            fields:[fields],
+            fields: fields,
+            page: pageNo
+        })
+    },
+
+    getTeamPageWithStudent: (userId, pageNo) => {
+        return request.post("/api/competition/check/getTeam",{
+            user_id: userId,
             page: pageNo
         })
     },

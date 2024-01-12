@@ -23,11 +23,7 @@ const fields = [
 ]
 
 const students = reactive({
-    v:[{
-        user_id: 1,
-        stu_id: "114514",
-        stu_name: "NAME"
-    }]
+    v:[]
 })
 
 watch(showBox, (newShowBox, oldShowBox) => {

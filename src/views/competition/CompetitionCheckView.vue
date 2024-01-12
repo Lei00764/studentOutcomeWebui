@@ -418,12 +418,14 @@ const onRevertButtonClicked = () => {
 
 const onPassButtonClicked = async () => {
     await api.checkApi.changeVerifyStatus(teamId, 2, checkMessage.value);
-    await onNextButtonClicked();
+    reloadPage()
+    //await onNextButtonClicked();
 }
 
 const onDenyButtonClicked = async () => {
     await api.checkApi.changeVerifyStatus(teamId, 3, checkMessage.value);
-    await onNextButtonClicked();
+    reloadPage()
+    //await onNextButtonClicked();
     checkMessage.value = "";
 }
 
@@ -444,8 +446,8 @@ const onGoBackButtonClicked = () => {
 
         <div class="operationButtons">
             <el-button type="primary" @click="onGoBackButtonClicked" plain>返回</el-button>
-            <el-button type="primary" @click="onPreviousButtonClicked">上一个</el-button>
-            <el-button type="primary" @click="onNextButtonClicked">下一个</el-button>
+<!--            <el-button type="primary" @click="onPreviousButtonClicked">上一个</el-button>-->
+<!--            <el-button type="primary" @click="onNextButtonClicked">下一个</el-button>-->
         </div>
 
         <el-row>

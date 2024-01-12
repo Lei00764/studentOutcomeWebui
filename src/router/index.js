@@ -32,6 +32,11 @@ const router = createRouter({
                     component: () => import("@/views/miscellany/UserView.vue"),
                 },
                 {
+                    path: "userManagement",
+                    name: "manageUserView",
+                    component: ()=>import("@/views/miscellany/UserManagementView.vue"),
+                },
+                {
                     path: "competition",
                     name: "competitionSeries",
                     children: [
