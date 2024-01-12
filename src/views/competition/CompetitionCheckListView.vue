@@ -1,11 +1,12 @@
 <script setup>
-import {computed, onBeforeMount, reactive, watch} from 'vue'
+import {computed, onBeforeMount, onMounted, reactive, watch} from 'vue'
 import {ElMessage, ElMessageBox} from "element-plus";
 import { ref } from 'vue'
 import { ElTable } from 'element-plus'
 import api from '@/api/competition'
 import checkSessionUtil from "@/utils/checkSession"
 import router from "@/router";
+import SelectStudentPanel from "@/components/SelectStudentPanel.vue";
 
 const queryForm = reactive({
     field: '',
@@ -24,7 +25,7 @@ const total = ref(1)
 
 const fields = [
     {field: "competition_name", name: "比赛名称"},
-    {field: "competition_term_name", name: "届数"},
+    {field: "term_name", name: "届数"},
     {field: "prize_name", name: "获奖名称"},
 ]
 
@@ -43,6 +44,8 @@ const onSubmit = () => {
 const multipleTableRef = ref()
 const multipleSelection = ref([])
 let firstFetch = true
+const studentQuery = ref(false)
+const selectStudentPanel = ref();
 
 const handleSelectionChange = (val) => {
     multipleSelection.value = val
@@ -82,10 +85,10 @@ const statusCode = {
  */
 const searchableFields = [
     {field: "id", name: "ID", canApproximate: false},
-    {field: "stu_id", name: "学号", canApproximate: false},
-    {field: "stu_name", name: "姓名", canApproximate: true},
+    // {field: "stu_id", name: "学号", canApproximate: false},
+    // {field: "stu_name", name: "姓名", canApproximate: true},
     {field: "competition_name", name: "比赛名称", canApproximate: true},
-    {field: "competition_term_name", name: "届数", canApproximate: true},
+    {field: "term_name", name: "届数", canApproximate: true},
     {field: "prize_name", name: "获奖名称", canApproximate: true},
     {field: "verify_status", name: "状态", canApproximate: false,
         selections:[
@@ -101,33 +104,52 @@ const searchableFields = [
 /**
  * @type {Ref<UnwrapRef<CombinedField[]>>}
  */
-const selectedFields = ref([])
+const selectedFields = ref([
+
+])
+const selectedStudent = ref({})
 
 const getCompetitionTeam = () => {
-    let fields = [];
-    for(let sf of selectedFields.value){
-        if(sf.sf.keyword !== "")
-            fields.push(sf.sf)
+    if(studentQuery.value){
+        let userId = selectedStudent.value.user_id;
+        api.checkApi.getTeamPageWithStudent(
+            userId,
+            currentPage.value
+        ).then(res => {
+            teams.v = res.json.teams
+            total.value = res.json.count
+            if(firstFetch){
+                firstFetch = false
+            }
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler();
+        })
+    }else{
+        let fields = [];
+        for(let sf of selectedFields.value){
+            if(sf.sf.keyword !== "")
+                fields.push(sf.sf)
+        }
+
+        api.checkApi.getTeamPageWithKeyword(
+            fields,
+            currentPage.value
+        ).then(res => {
+            teams.v = res.json.teams
+            total.value = res.json.count
+            if(firstFetch){
+                firstFetch = false
+            }
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler();
+        })
     }
 
-    api.checkApi.getTeamPageWithKeyword(
-        fields,
-        currentPage.value
-    ).then(res => {
-        teams.v = res.json.teams
-        total.value = res.json.count
-        if(firstFetch){
-            firstFetch = false
-        }
-    }).catch(error => {
-        if(error.network) return
-        error.defaultHandler();
-    })
 }
 
-onBeforeMount(()=>{
-    getCompetitionTeam()
-})
+
 
 watch(currentPage, ()=>{
     getCompetitionTeam()
@@ -135,6 +157,7 @@ watch(currentPage, ()=>{
 
 const onClear = () => {
     selectedFields.value = [];
+    selectedStudent.value = {};
 }
 
 const goStartCheck = (row) => {
@@ -188,11 +211,34 @@ const onFieldSelected = (selectedField) => {
     for(let f of searchableFields){
         if(f.field === selectedField.sf.field){
             selectedField.f = f;
+            if(f.canApproximate){
+                selectedField.sf.precise = true;
+            }
             return;
         }
     }
     selectedField.f = undefined;
 }
+
+const selectStudent = () => {
+    selectStudentPanel.value.selectStudent().then((ans)=>{
+        console.log(ans);
+        selectedStudent.value = ans;
+    }).catch((error)=>{
+        ElMessage.info("取消选择学生")
+    })
+}
+
+
+onBeforeMount(()=>{
+    // 预先设置好选择“等待审核”状态
+
+    selectedFields.value.push({
+        f: searchableFields[4],
+        sf: {field: 'verify_status', keyword: 1}
+    })
+    getCompetitionTeam()
+})
 
 </script>
 
@@ -203,44 +249,74 @@ const onFieldSelected = (selectedField) => {
             帮助：在本页面中，您可以查询并审核学生提交的参赛记录。查询条件间的关系为“与”
         </div>
         <div>
-            <el-form v-for="sf in selectedFields" :inline="true" class="queryForm">
-                <el-form-item label="查询字段">
-                    <el-select
-                        v-model="sf.sf.field"
-                        clearable
-                        @change="onFieldSelected(sf)"
-                    >
-
-                        <el-option v-for="f in getAvailableFields(sf)" :label="f.name" :value="f.field" />
-                    </el-select>
-                </el-form-item>
-
-                <el-form-item label="关键词" v-if="!sf.f || !sf.f.selections">
-                    <el-input v-model="sf.sf.keyword" placeholder="无" clearable :disabled="!sf.f" />
-                </el-form-item>
-
-                <el-form-item label="选择" v-else :label-width="54">
-                    <el-select
-                        v-model="sf.sf.keyword"
-                        placeholder="无"
-                        clearable
-                    >
-                        <el-option v-for="op in sf.f.selections" :label="op.name" :value="op.value" :key="op.value"/>
-                    </el-select>
-                </el-form-item>
-                <el-form-item v-if="sf.f?.canApproximate">
-                    <el-checkbox label="精确匹配" v-model="sf.sf.precise"/>
-                </el-form-item>
-
-                <el-form-item>
-                    <el-button @click="removeField(sf)">
-                        -
-                    </el-button>
+            <el-form  :inline="true" class="queryForm">
+                <el-form-item label="查询模式">
+                    <el-switch
+                        v-model="studentQuery"
+                        class="mb-2"
+                        style="--el-switch-on-color: #13ce66; --el-switch-off-color: #13ce66"
+                        active-text="按学生查询"
+                        inactive-text="全局查询"
+                    />
                 </el-form-item>
             </el-form>
+
+        </div>
+
+        <div>
+            <div v-if="!studentQuery">
+                <el-form v-for="sf in selectedFields" :inline="true" class="queryForm">
+                    <el-form-item label="查询字段">
+                        <el-select
+                            v-model="sf.sf.field"
+                            clearable
+                            @change="onFieldSelected(sf)"
+                        >
+
+                            <el-option v-for="f in getAvailableFields(sf)" :label="f.name" :value="f.field" />
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label="关键词" v-if="!sf.f || !sf.f.selections">
+                        <el-input v-model="sf.sf.keyword" placeholder="无" clearable :disabled="!sf.f" />
+                    </el-form-item>
+
+                    <el-form-item label="选择" v-else :label-width="54">
+                        <el-select
+                            v-model="sf.sf.keyword"
+                            placeholder="无"
+                            clearable
+                        >
+                            <el-option v-for="op in sf.f.selections" :label="op.name" :value="op.value" :key="op.value"/>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="sf.f?.canApproximate">
+                        <el-checkbox label="精确匹配" v-model="sf.sf.precise"/>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button @click="removeField(sf)">
+                            -
+                        </el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <div v-else class="queryForm">
+                <el-form :inline="true">
+                    <el-form-item label="学号" v-if="selectedStudent.user_id">
+                        {{ selectedStudent.stu_id }}
+                    </el-form-item>
+                    <el-form-item label="姓名" v-if="selectedStudent.user_id">
+                        {{ selectedStudent.stu_name }}
+                    </el-form-item>
+                </el-form>
+
+            </div>
+
             <el-form>
                 <el-form-item>
-                    <el-button @click="addField" :disabled="selectedFields.length >= searchableFields.length">添加条件</el-button>
+                    <el-button v-if="studentQuery" @click="selectStudent">选择学生</el-button>
+                    <el-button v-else @click="addField" :disabled="selectedFields.length >= searchableFields.length">添加条件</el-button>
                     <el-button  @click="onClear">清空</el-button>
                     <el-button type="primary" @click="onSubmit">筛选</el-button>
                     <span class="resultCounter">&nbsp; 共 {{total}} 个结果</span>
@@ -286,7 +362,7 @@ const onFieldSelected = (selectedField) => {
 
     </div>
 
-
+    <SelectStudentPanel ref="selectStudentPanel"></SelectStudentPanel>
 </template>
 
 <style scoped>
