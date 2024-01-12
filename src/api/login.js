@@ -50,11 +50,36 @@ const getStudentInfo = (user_id) => {
     })
 }
 
+const resetStudentPassword = (userId) => {
+    return request.post("/api/studentInfo/resetPassword", {
+        user_id: userId
+    })
+}
+
+/**
+ * 修改/新建学生账号信息 userId=-1代表创建学生
+ * @param userId
+ * @param stuName
+ * @param stuId
+ * @param grade
+ * @return {Promise<axios.AxiosResponse<any>>}
+ */
+const modifyStudent = (userId, stuName, stuId, grade) => {
+    return request.post("/api/studentInfo/edit", {
+        user_id: userId,
+        stu_name: stuName,
+        stu_id: stuId,
+        grade: grade
+    })
+}
+
 export default {
     login,
     getUserInfo,
     logout,
     updatePassword,
     getStudentPageWithKeyword,
-    getStudentInfo
+    getStudentInfo,
+    modifyStudent,
+    resetStudentPassword
 }

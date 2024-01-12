@@ -79,16 +79,16 @@ const clearMessages = () => {
 
             }}
         </p>
-        <div class="messageEntry" v-if="showMsg" v-for="item of showingMessages.data" :class="{ clickable: item.url }"
-            @click="goUrl(item.url)">
+        <div class="messageEntry" v-if="showMsg" v-for="item of showingMessages.data" :class="{ clickable: item.related_link }"
+            @click="goUrl(item.related_link)">
             <div class="content">
-                <span class="dotWrapper" v-if="item.unread">
+                <span class="dotWrapper" v-if="!item.is_read">
                     <span class="unreadDot"></span>
                 </span>
                 <span>{{ item.content }}</span>
                 <!-- <span>{{ item.send_time }}</span> -->
             </div>
-            <div class="goButton" v-if="item.url">
+            <div class="goButton" v-if="item.related_link">
                 <i class="fi fi-rr-angle-small-right centerIcon"></i>
             </div>
         </div>
@@ -100,7 +100,7 @@ const clearMessages = () => {
                     "展开全部" }}</span>
         </el-button>
         <el-button class="clearButton" @click="clearMessages" link>
-            <i class="fi fi-rr-trash centerIcon"></i><span>清除已读消息</span>
+            <i class="fi fi-rr-trash centerIcon"></i><span>全部已读</span>
         </el-button>
     </p>
 </template>

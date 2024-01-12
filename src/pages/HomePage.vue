@@ -77,8 +77,6 @@ loginApi.getUserInfo().then(response => {
                 { "title": "社会活动", "icon": "fi-rr-users", "path": "/socialWork" },
                 { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
-                { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
-                { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" }
             ]
             break;
         case 3:
@@ -86,9 +84,8 @@ loginApi.getUserInfo().then(response => {
 
                 { "title": "首页", "icon": "fi-rr-home", "path": "/" },
                 { "title": "审核参赛信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
-                { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
                 { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
-                { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" }
+                { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" },
                 {"title":"用户管理","icon":"fi-rr-user", "path":"/userManagement"},
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
             ]
