@@ -6,12 +6,12 @@ const router = createRouter({
         {
             path: '/login',
             name: 'login',
-            component: ()=>import("@/pages/LoginPage.vue"),
-            children:[
+            component: () => import("@/pages/LoginPage.vue"),
+            children: [
                 {
                     path: "",
                     name: "loginView",
-                    component: ()=>import("@/views/miscellany/LoginView.vue"),
+                    component: () => import("@/views/miscellany/LoginView.vue"),
                 },
 
             ]
@@ -19,17 +19,17 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            component: ()=>import("@/pages/HomePage.vue"),
-            children:[
+            component: () => import("@/pages/HomePage.vue"),
+            children: [
                 {
                     path: "",
                     name: "homeView",
-                    component: ()=>import("@/views/miscellany/HomeView.vue"),
+                    component: () => import("@/views/miscellany/HomeView.vue"),
                 },
                 {
                     path: "user",
                     name: "userView",
-                    component: ()=>import("@/views/miscellany/UserView.vue"),
+                    component: () => import("@/views/miscellany/UserView.vue"),
                 },
                 {
                     path: "userManagement",
@@ -43,7 +43,7 @@ const router = createRouter({
                         {
                             path: "",
                             name: "competitionHomeView",
-                            component: ()=>import("@/views/competition/CompetitionView.vue"),
+                            component: () => import("@/views/competition/CompetitionView.vue"),
                         },
                         {
                             path: "edit/:teamId",
@@ -70,7 +70,7 @@ const router = createRouter({
                         {
                             path: "",
                             name: "competitionCheckHomeView",
-                            component: ()=>import("@/views/competition/CompetitionCheckListView.vue"),
+                            component: () => import("@/views/competition/CompetitionCheckListView.vue"),
                         },
                         {
                             path: ":teamId",
@@ -83,47 +83,77 @@ const router = createRouter({
                 {
                     path: "paper",
                     name: "paperView",
-                    component: ()=>import("@/views/paper/paperView.vue"),
+                    component: () => import("@/views/paper/paperView.vue"),
                 },
                 {
                     path: "ChangePaperwork",
                     name: "ChangePaperwork",
-                    component: ()=>import("@/views/paper/ChangePaperwork.vue"),
+                    component: () => import("@/views/paper/ChangePaperwork.vue"),
                 },
                 {
                     path: "patent",
                     name: "patentView",
-                    component: ()=>import("@/views/patent/patentView.vue"),
+                    component: () => import("@/views/patent/patentView.vue"),
                 },
                 {
                     path: "ChangePatentwork",
                     name: "ChangePatentwork",
-                    component: ()=>import("@/views/patent/ChangePatentwork.vue"),
+                    component: () => import("@/views/patent/ChangePatentwork.vue"),
                 },
                 {
                     path: "volunteers",
                     name: "volunteersView",
-                    component: ()=>import("@/views/volunteer/VolunteersView.vue"),
+                    component: () => import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
                     path: "socialWork",
                     name: "socialWork",
-                    component: ()=>import("@/views/social/SocialWork.vue"),
+                    component: () => import("@/views/social/SocialWork.vue"),
                 },
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
-                    component: ()=>import("@/views/volunteer/changeVolunteers.vue"),
+                    component: () => import("@/views/volunteer/changeVolunteers.vue"),
                 },
                 {
                     path: "changeSocialworks",
                     name: "changeSocialworks",
-                    component: ()=>import("@/views/social/ChangeSocialwork.vue"),
+                    component: () => import("@/views/social/ChangeSocialwork.vue"),
                 },
+                {
+                    path: "ticket",
+                    name: "ticket",
+                    children: [
+                        {
+                            path: "",
+                            name: "ticketHomeView",
+                            component: () => import("@/views/ticket/TicketHome.vue"),
+                        },
+                        {
+                            path: "view/:ticketId",
+                            name: "ticketView",
+                            component: () => import("@/views/ticket/TicketView.vue")
+                        },
+                        {
+                            path: "viewAdmin/:ticketId",
+                            name: "ticketViewAdmin",
+                            component: () => import("@/views/ticket/TicketViewAdmin.vue")
+                        }]
+                },
+                {
+                    path: "reviewTicket",
+                    name: "reviewTicket",
+                    component: () => import("@/views/ticket/ReviewTicket.vue")
+                },
+                {
+                    path: "notice",
+                    name: "notice",
+                    component: () => import("@/views/notice/SendNotice.vue")
+                }
             ]
         },
 
-        { path: '/:pathMatch(.*)*', name: 'NotFound', component: ()=>import("@/pages/ErrorPage.vue") },
+        { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("@/pages/ErrorPage.vue") },
     ]
 })
 

@@ -2,7 +2,7 @@ import request from "@/utils/request"
 import axios from "axios";
 
 const login = (username, password) => {
-    return request.post("/api/studentInfo/login",{
+    return request.post("/api/studentInfo/login", {
         username: username,
         password: password,
     })
@@ -18,7 +18,7 @@ const getUserInfo = () => {
 }
 
 const updatePassword = (oldPassword, newPassword) => {
-    return request.post("/api/studentInfo/changePasswordStudent",{
+    return request.post("/api/studentInfo/changePasswordStudent", {
         new_password: newPassword,
         old_password: oldPassword
     })
@@ -33,11 +33,20 @@ const updatePassword = (oldPassword, newPassword) => {
  * @return {Promise}
  */
 const getStudentPageWithKeyword = (field, keyword, precise, pageNo) => {
-    return request.post("/api/studentInfo/select",{
+    return request.post("/api/studentInfo/select", {
         field: field,
         keyword: keyword,
         precise: precise,
         page: pageNo
+    })
+}
+
+/**
+ * 根据 user_id 获取学生信息
+ */
+const getStudentInfo = (user_id) => {
+    return request.post("/api/studentInfo/getStudentInfo", {
+        user_id: user_id
     })
 }
 
@@ -46,5 +55,6 @@ export default {
     getUserInfo,
     logout,
     updatePassword,
-    getStudentPageWithKeyword
+    getStudentPageWithKeyword,
+    getStudentInfo
 }

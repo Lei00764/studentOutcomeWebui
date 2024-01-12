@@ -138,8 +138,8 @@ export default {
                 participate_time: '',
                 duration_day: '',
                 duration_hour: '',
-                vol_type: '',      
-                vol_detail: '',   
+                vol_type: '',
+                vol_detail: '',
             },
             operationLogs: [],
             fileList: [],
@@ -157,7 +157,7 @@ export default {
             console.log(this.evidenceCheck.dialogImageUrl);
 
             api.submitCreate({
-                VOL_name: this.volunteers.VOL_name,
+                vol_name: this.volunteers.VOL_name,
                 participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
                 duration_day: this.parseToInt(this.volunteers.duration_day),
                 duration_hour: this.parseToInt(this.volunteers.duration_hour),
@@ -167,14 +167,12 @@ export default {
             })
                 .then((res) => {
                     console.log(res.status);
+                    location.reload();
                 })
                 .catch((error) => {
                     console.error('Error enrolling in training:', error);
                 });
-
-            location.reload();
         },
-
 
 
         handleRemove(uploadFile, uploadFiles) {
