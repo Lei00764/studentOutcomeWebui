@@ -203,7 +203,7 @@ const formatDateTime = (isoString) => {
     display: flex;
     justify-content: flex-end;
 
-    margin-right: 20px;
+    margin-right: 40px;
 }
 
 .admin .info-content {

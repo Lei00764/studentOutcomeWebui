@@ -1,9 +1,12 @@
 import request from "@/utils/request"
 
 
-const createTicket = () => {
+const createTicket = (ticket_type, title, content) => {
+    console.log(ticket_type, title, content)
     return request.post("/api/ticket/createTicket", {
-        // content: content,
+        ticket_type: ticket_type,
+        title: title,
+        content: content,
     })
 }
 
@@ -14,8 +17,9 @@ const replyTicket = (ticket_id, content) => {
     })
 }
 
-const closeTicket = () => {
+const closeTicket = (ticket_id) => {
     return request.post("/api/ticket/closeTicket", {
+        ticket_id: ticket_id
     })
 }
 
@@ -37,11 +41,20 @@ const getTicketContentList = (ticket_id) => {
         })
 }
 
+/**
+ * 管理员获取所有工单
+ */
+const getAllTicketList = () => {
+    return request.post("/api/ticket/getAllTicketList")
+
+}
+
 export default {
     createTicket,
     replyTicket,
     closeTicket,
     getTicketList,
     getTicketInfo,
-    getTicketContentList
+    getTicketContentList,
+    getAllTicketList
 }

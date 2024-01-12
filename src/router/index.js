@@ -122,7 +122,7 @@ const router = createRouter({
                         {
                             path: "",
                             name: "ticketHomeView",
-                            component: () => import("@/views/ticket/FillTicket.vue"),
+                            component: () => import("@/views/ticket/TicketHome.vue"),
                         },
 
                         {
@@ -130,6 +130,11 @@ const router = createRouter({
                             name: "ticketView",
                             component: () => import("@/views/ticket/TicketView.vue")
                         },]
+                },
+                {
+                    path: "reviewTicket",
+                    name: "reviewTicket",
+                    component: () => import("@/views/ticket/ReviewTicket.vue")
                 },
                 {
                     path: "notice",
