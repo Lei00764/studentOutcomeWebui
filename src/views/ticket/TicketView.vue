@@ -84,7 +84,13 @@ const ticket_status = ref("")
 const ticketContentList = reactive({ data: [] });
 
 const replyContent = ref("")
+
 const replyTicket = () => {
+    if (!replyContent.value.trim()) {
+        ElMessage.warning("回复内容不能为空");
+        return;
+    }
+
     api.replyTicket(ticketId, replyContent.value).then(res => {
         ElMessage.success("回复成功");
 

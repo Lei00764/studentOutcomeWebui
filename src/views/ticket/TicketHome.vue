@@ -9,13 +9,13 @@
         <el-table :data="ticketList.data">
             <el-table-column property="ticket_id" label="ID">
             </el-table-column>
-            <el-table-column property="ticket_type" label="ticket_type">
+            <el-table-column property="ticket_type" label="工单类型">
             </el-table-column>
-            <el-table-column property="title" label="title">
+            <el-table-column property="title" label="标题">
             </el-table-column>
-            <el-table-column property="content" label="content">
+            <el-table-column property="content" label="内容">
             </el-table-column>
-            <el-table-column property="status" label="status">
+            <el-table-column property="status" label="状态">
                 <template #default="scope">
                     <span
                         :class="{ 'status-open': scope.row.status === 'OPEN', 'status-close': scope.row.status === 'CLOSE' }">
@@ -32,8 +32,8 @@
             </el-table-column>
         </el-table>
         <el-dialog v-model="showModal" title="填报工单">
-            <el-form :model="ticketForm" label-width="80px">
-                <el-form-item label="工单类型">
+            <el-form :model="ticketForm" :rules="rules" ref="formRef" label-width="80px">
+                <el-form-item label="工单类型" prop="formType">
                     <el-select v-model="ticketForm.formType" placeholder="请选择工单类型">
                         <el-option label="竞赛相关" value="competition"></el-option>
                         <el-option label="论文相关" value="paper"></el-option>
@@ -43,10 +43,10 @@
                         <el-option label="其他" value="other"></el-option>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="标题">
+                <el-form-item label="标题" prop="formTitle">
                     <el-input v-model="ticketForm.formTitle"></el-input>
                 </el-form-item>
-                <el-form-item label="内容">
+                <el-form-item label="内容" prop="formContent">
                     <el-input type="textarea" v-model="ticketForm.formContent"></el-input>
                 </el-form-item>
             </el-form>
@@ -75,26 +75,42 @@ const ticketForm = reactive({
     formContent: ''
 });
 
+const rules = {
+    formType: [
+        { required: true, message: "请选择工单类型", trigger: "blur" }
+    ],
+    formTitle: [
+        { required: true, message: "请输入标题", trigger: "blur" }
+    ],
+    formContent: [
+        { required: true, message: "请输入内容", trigger: "blur" }
+    ]
+};
+
+const formRef = ref(null);
+
 const toggleModal = () => {
     showModal.value = !showModal.value;
 };
 
 
 const submitForm = () => {
-    console.log('提交的数据:', ticketForm);
+    // console.log('提交的数据:', ticketForm);
 
-    // 调用后端接口
-    api.createTicket(ticketForm.formType, ticketForm.formTitle, ticketForm.formContent).then(res => {
-        // console.log(res);
-        showModal.value = false;
-
-        // 清空表单
-        ticketForm.formType = '';
-        ticketForm.formTitle = '';
-        ticketForm.formContent = '';
-
-        getTicketList();
-    })
+    formRef.value.validate((valid) => {
+        if (valid) {
+            api.createTicket(ticketForm.formType, ticketForm.formTitle, ticketForm.formContent).then(res => {
+                showModal.value = false;
+                ticketForm.formType = '';
+                ticketForm.formTitle = '';
+                ticketForm.formContent = '';
+                getTicketList();
+            });
+        } else {
+            ElMessage.warning("请完整填写表单信息");
+            return false;
+        }
+    });
 };
 
 onBeforeMount(() => {

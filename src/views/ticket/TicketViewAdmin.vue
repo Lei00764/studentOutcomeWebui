@@ -8,8 +8,11 @@
         <div class="ticket-info">
             <h2>{{ title }}</h2>
             <p>ID: {{ ticketId }}</p>
+            <p>学号: {{ stu_id }}</p>
+            <p>姓名: {{ stu_name }}</p>
             <p>内容: {{ content }}</p>
             <p>状态: {{ ticket_status }}</p>
+
         </div>
 
         <div class="chat-content">
@@ -48,6 +51,7 @@ import { useRoute } from "vue-router";
 import { computed, reactive, ref, watch, h, onBeforeMount } from "vue";
 import { ElMessage, ElMessageBox, genFileId } from "element-plus";
 import UserInfoCard from "@/components/UserInfoCard.vue";
+import apiStudent from "@/api/login.js";
 
 const routerWatchable = useRoute()
 
@@ -68,7 +72,15 @@ const reloadPage = () => {
         title.value = res.data.data.ticket.title
         content.value = res.data.data.ticket.content
         ticket_status.value = res.data.data.ticket.status
+        user_id.value = res.data.data.ticket.user_id
+
+        apiStudent.getStudentInfo(user_id.value).then(res => {
+            stu_id.value = res.data.data.StudentInfo.stu_id
+            stu_name.value = res.data.data.StudentInfo.stu_name
+        })
     })
+
+
 
     api.getTicketContentList(ticketId).then(res => {
         ticketContentList.data = res.data.data.ticketContents;
@@ -82,6 +94,9 @@ onBeforeMount(() => {
 const title = ref("")
 const content = ref("")
 const ticket_status = ref("")
+const user_id = ref("")
+const stu_id = ref("")
+const stu_name = ref("")
 const ticketContentList = reactive({ data: [] });
 
 const replyContent = ref("")
