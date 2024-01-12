@@ -32,9 +32,11 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import SelectStudentPanel from "@/components/SelectStudentPanel.vue";
 import api from "@/api/notice";
+import { ElMessage, ElMessageBox, genFileId } from "element-plus";
+
 
 const notice = reactive({
     type: 'personal',
@@ -45,7 +47,30 @@ const notice = reactive({
 
 const selectedStudent = ref({});
 
+watch(() => notice.type, (newType, oldType) => {
+    if (newType !== oldType) {
+        // 清空内容和相关链接
+        notice.content = '';
+        notice.related_link = '';
+
+        selectedStudent.value = {};
+    }
+});
+
+
 const sendNotice = async () => {
+    // 如果是个人通知，确保已选择学生
+    if (notice.type === 'personal' && !selectedStudent.value.stu_id) {
+        ElMessage.error("请选择接收通知的学生");
+        return;
+    }
+
+    // 验证通知内容是否填写
+    if (!notice.content.trim()) {
+        ElMessage.error("通知内容不能为空");
+        return;
+    }
+
     try {
         if (notice.type === 'personal' && selectedStudent.value.stu_id) {
             await api.sendPersonalNotice(
@@ -58,6 +83,7 @@ const sendNotice = async () => {
                 notice.related_link
             );
         }
+        ElMessage.success("通知发送成功");
     } catch (error) {
         console.log(error);
     }
