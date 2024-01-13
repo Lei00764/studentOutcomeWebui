@@ -1,8 +1,11 @@
 <script setup>
 
-import {ElMessage, ElTable} from "element-plus";
+import {ElMessage, ElMessageBox, ElTable} from "element-plus";
 import {ref} from "vue";
 import SelectStudentPanel from "@/components/SelectStudentPanel.vue";
+import router from "@/router";
+import api from "@/api/login"
+
 const selectStudentPanel = ref();
 const editing = ref();
 const selectedStudent = ref({});
@@ -37,12 +40,71 @@ const onModeChange = () =>{
     console.log(111)
 }
 
-const save = () => {
+const save = async () => {
+    if(queryFormReal.value.stu_id === "" || queryFormReal.value.stu_name === "")
+        ElMessage.error("请输入学号和姓名。")
 
+    if(editing.value && queryFormReal.value.stu_id !== selectedStudent.value.stu_id){
+        try{
+            await ElMessageBox.confirm("你修改了学生的学号，这可能导致用户无法登录，确认继续？",                {
+                type: 'warning'
+            })
+        }catch(e){
+            return;
+        }
+    }
+
+
+    api.modifyStudent(
+        queryFormReal.value.user_id,
+        queryFormReal.value.stu_name,
+        queryFormReal.value.stu_id,
+        queryFormReal.value.grade
+    ).then(res => {
+        if(editing.value) {
+            ElMessage.success("用户信息已修改。")
+            selectedStudent.value.stu_name = queryFormReal.value.stu_name;
+            selectedStudent.value.grade = queryFormReal.value.grade;
+            selectedStudent.value.stu_id = queryFormReal.value.stu_id;
+        } else {
+            ElMessageBox.alert("用户已经创建，可以用学号作为密码登录。")
+            queryFormReal.value =  {
+                stu_id: '',
+                stu_name: '',
+                user_id: -1,
+                grade: ""
+            }
+
+        }
+
+    }).catch(error => {
+        if(error.network) return
+        switch (error.errorCode){
+            case 665:
+                ElMessage.error("请输入学号和姓名。")
+                return;
+            case 666:
+                ElMessage.error("已有用户有这个学号了。")
+                return;
+        }
+        error.defaultHandler()
+    })
 }
 
 const resetPassword = () => {
+    ElMessageBox.confirm(`确认要重置用户${queryFormReal.value.stu_name}的密码吗？重置后，该用户需要使用学号作为密码登录。`, "重置密码",
+        {
+            type: 'warning'
+        }).then(()=>{
+        api.resetStudentPassword(queryFormReal.value.user_id).then(res => {
+            ElMessage.success("该用户的密码已重置 ")
 
+        }).catch(error => {
+            if(error.network) return
+
+            error.defaultHandler()
+        })
+    })
 }
 </script>
 

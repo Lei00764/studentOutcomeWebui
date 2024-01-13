@@ -60,7 +60,7 @@ watch(() => notice.type, (newType, oldType) => {
 
 const sendNotice = async () => {
     // 如果是个人通知，确保已选择学生
-    if (notice.type === 'personal' && !selectedStudent.value.stu_id) {
+    if (notice.type === 'personal' && !selectedStudent.value.user_id) {
         ElMessage.error("请选择接收通知的学生");
         return;
     }
@@ -72,9 +72,9 @@ const sendNotice = async () => {
     }
 
     try {
-        if (notice.type === 'personal' && selectedStudent.value.stu_id) {
+        if (notice.type === 'personal' && selectedStudent.value.user_id) {
             await api.sendPersonalNotice(
-                selectedStudent.value.stu_id,
+                selectedStudent.value.user_id,
                 notice.content
             );
         } else {
