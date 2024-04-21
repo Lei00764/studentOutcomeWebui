@@ -83,7 +83,7 @@ const router = createRouter({
                 {
                     path: "paper",
                     name: "paperView",
-                    component: () => import("@/views/paper/paperView.vue"),
+                    component: () => import("@/views/paper/PaperView.vue"),
                 },
                 {
                     path: "ChangePaperwork",
@@ -93,7 +93,7 @@ const router = createRouter({
                 {
                     path: "patent",
                     name: "patentView",
-                    component: () => import("@/views/patent/patentView.vue"),
+                    component: () => import("@/views/patent/PatentView.vue"),
                 },
                 {
                     path: "ChangePatentwork",
@@ -113,7 +113,7 @@ const router = createRouter({
                 {
                     path: "changeVolunteers",
                     name: "changeVolunteers",
-                    component: () => import("@/views/volunteer/changeVolunteers.vue"),
+                    component: () => import("@/views/volunteer/ChangeVolunteers.vue"),
                 },
                 {
                     path: "changeSocialworks",

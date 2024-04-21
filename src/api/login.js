@@ -73,6 +73,28 @@ const modifyStudent = (userId, stuName, stuId, grade) => {
     })
 }
 
+
+/**
+ * @typedef {Object} uploadStudentExcelAns
+ * @property {number} json.completedCount
+ * @property {number} json.repeatedCount
+ * @property {number} json.failedCount
+ */
+/**
+ *
+ * @param file{File}
+ * @return {Promise<uploadStudentExcelAns>}
+ */
+
+const uploadStudentExcel = (file) => {
+    let fd = new FormData()
+    let canSubmit = false
+    fd.append("file", file)
+
+
+    return request.post("/api/studentInfo/batchImport", fd)
+}
+
 export default {
     login,
     getUserInfo,
@@ -81,5 +103,6 @@ export default {
     getStudentPageWithKeyword,
     getStudentInfo,
     modifyStudent,
-    resetStudentPassword
+    resetStudentPassword,
+    uploadStudentExcel
 }
