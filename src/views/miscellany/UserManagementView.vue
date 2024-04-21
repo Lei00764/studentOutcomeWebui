@@ -9,6 +9,8 @@ import api from "@/api/login"
 const selectStudentPanel = ref();
 const editing = ref();
 const selectedStudent = ref({});
+const fileUploadDialogVisible = ref(false);
+const file1 = ref()
 const queryFormReal = ref({
     stu_id: '',
     stu_name: '',
@@ -106,6 +108,30 @@ const resetPassword = () => {
         })
     })
 }
+
+const onUpload = () => {
+
+    if(file1.value.files.length <= 0){
+        ElMessage.error("请至少上传一个文件")
+        return;
+    }
+    api.uploadStudentExcel(file1.value.files[0]).then(res => {
+        let success = true
+        if(file1.value.value !== '') {
+            if (res.json.completedCount !== undefined) {
+                ElMessageBox.alert(`上传学生表格成功，添加${res.json.completedCount}个，忽略${res.json.repeatedCount}个，失败${res.json.failedCount}个`)
+                file1.value.value = ''
+            } else {
+                ElMessage.error('上传学生表格失败，请检查')
+                success = false
+            }
+        }
+        if(success) fileUploadDialogVisible.value = false
+    }).catch(error => {
+        if(error.network) return
+        error.defaultHandler();
+    })
+}
 </script>
 
 <template>
@@ -126,6 +152,8 @@ const resetPassword = () => {
                     active-text="修改用户"
                     inactive-text="新建用户"
                 />
+                &nbsp
+                <el-button @click="()=>{fileUploadDialogVisible = true}" type="primary">批量导入学生</el-button>
             </el-form-item>
         </el-form>
 
@@ -163,8 +191,24 @@ const resetPassword = () => {
                 <el-button @click="resetPassword" type="danger" v-if="editing">重置密码</el-button>
                 <el-button @click="save" type="primary">{{ editing ? "保存" : "创建用户"}}</el-button>
             </el-form-item>
+
         </el-form>
 
+        <el-dialog v-model="fileUploadDialogVisible" title="上传文件" >
+            <div style="text-align: center;">
+                <p>请上传学生Excel表</p>
+                <p>系统将先根据 学号 更新系统中的账户信息，后将加入系统中不存在的账户。</p>
+                <p>Excel表要求：账户数据从第二行开始，</p>
+                <p>列要求：A学号、B姓名、C年级、D初始密码</p>
+                <p>除了学号外，其余列允许为空，当密码为空时，初始密码为学号。</p>
+                <input type="file" ref="file1" accept=".xlsx">
+            </div>
+
+            <div slot="footer" class="dialog-footer">
+                <el-button size="small" @click="fileUploadDialogVisible = false">取消</el-button>
+                <el-button size="small" type="primary" @click="onUpload">确定</el-button>
+            </div>
+        </el-dialog>
 
     </div>
 
