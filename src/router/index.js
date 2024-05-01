@@ -81,6 +81,11 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "competitionManage",
+                    name: "competitionManage",
+                    component: () => import("@/views/competition/CompetitionManagementView.vue")
+                },
+                {
                     path: "paper",
                     name: "paperView",
                     component: () => import("@/views/paper/PaperView.vue"),

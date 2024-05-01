@@ -1,8 +1,13 @@
 import axios from 'axios';
 import loadingScreen from "@/global/loading";
-import {ElMessage, ElMessageBox} from "element-plus";
+import {ElMessage} from "element-plus";
 import router from "@/router";
 
+/**
+ *
+ * @type {axios.AxiosInstance}
+ * @property {(number) => number} post
+ */
 const service = axios.create({
     headers: {},
     timeout:5000,
@@ -88,4 +93,24 @@ service.interceptors.response.use(function (response) {
     });
 });
 
-export default service
+
+/**
+ * @template T
+ * @typedef {axios.AxiosResponse} ParsedResponse
+ * @property {T} json
+ */
+
+export default {
+    /**
+     * @return {Promise<ParsedResponse>}
+     */
+    post: function () {
+        return service.post(...arguments)
+    },
+    /**
+     * @return {Promise<ParsedResponse>}
+     */
+    get: function () {
+        return service.get(...arguments)
+    }
+}
