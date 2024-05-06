@@ -270,6 +270,16 @@ const metadataEditApi = {
         return request.post("/api/competition/metadata/getLevels")
     },
 
+    /**
+     *
+     * @param id
+     * @param newName
+     * @param newLevelId
+     * @param competitionId
+     * @return {Promise<ParsedResponse<
+     *  {newTerm: CompetitionTerm}
+     * >>}
+     */
     editCompetitionTerm: (id, newName, newLevelId, competitionId) => {
         return request.post("/api/competition/metadata/editTerm", {
             id,

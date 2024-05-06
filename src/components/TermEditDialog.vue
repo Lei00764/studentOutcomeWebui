@@ -48,7 +48,7 @@ watch(show, () => {
         }
     }
     if(!found)
-        nowLevelId.value = -1;
+        nowLevelId.value = competitionLevels.value[0].id;
 
     api.editApi.queryPrizeOfTerm(editingTerm.value.id).then(res => {
         prizes.value = res.json.prizes
@@ -85,9 +85,16 @@ const saveTerm = () => {
             if(level.id === nowLevelId.value) {
                 editingTerm.value.level_name = level.levelName;
             }
+            if(editingTerm.value.id === -1) {
+                editingTerm.value.id = res.json.newTerm.id
+            }
         }
 
-        emit("saved", editingTerm.value)
+        emit("saved", {
+            id: editingTerm.value.id,
+            term_name: editingTerm.value.term_name,
+            level_name: editingTerm.value.level_name
+        })
         show.value = false;
     }).catch(error => {
         if(error.network) return
@@ -99,14 +106,14 @@ const saveTerm = () => {
 
 const deletePrize = (id) => {
     ElMessageBox.confirm("删除本奖项将删除相关的参赛记录，是否继续？").then(()=> {
-        api.metadataEditApi.deleteCompetitionPrize(id).then(res => {
+        api.metadataEditApi.deleteCompetitionPrize(id).then(() => {
 
             let l = prizes.value.length;
             for(let i = 0; i < l; ++i) {
                 if(prizes.value[i].id === id) {
                     ElMessage.success(`已删除奖项。${prizes.value[i].prize_name}`)
                     prizes.value.splice(i, 1);
-                    emit("prizeUpdated", prizes.value)
+                    emit("prizeUpdated")
                     break;
                 }
             }
@@ -119,7 +126,7 @@ const deletePrize = (id) => {
 
 const editPrize = (id) => {
     ElMessageBox.prompt("请输入新名称").then((newName)=> {
-        api.metadataEditApi.editCompetitionPrize(id, newName.value, editingTerm.value.id).then(res => {
+        api.metadataEditApi.editCompetitionPrize(id, newName.value, editingTerm.value.id).then(() => {
 
             let l = prizes.value.length;
             for(let i = 0; i < l; ++i) {
@@ -174,23 +181,30 @@ const createPrize = () => {
 
     </el-form>
 
-    <p class="el-dialog__title">修改本届奖项信息</p>
-    <p>对奖项信息的修改将立即保存</p>
-    <el-button @click="createPrize">添加</el-button>
-    <el-table :data="prizes">
-        <el-table-column label="ID" >
-            <template #default="scope">
-                {{ scope.row.id === -1 ? "新增" : scope.row.id }}
-            </template>
-        </el-table-column>
-        <el-table-column label="名称" property="prize_name" />
-        <el-table-column label="操作" >
-            <template #default="scope">
-                <el-button @click="editPrize(scope.row.id)">修改</el-button>
-                <el-button @click="deletePrize(scope.row.id)">删除</el-button>
-            </template>
-        </el-table-column>
-    </el-table>
+
+    <div v-if="editingTerm.id !== -1">
+        <p class="el-dialog__title">修改本届奖项信息</p>
+        <p>对奖项信息的修改将立即保存</p>
+        <el-button @click="createPrize">添加</el-button>
+        <el-table :data="prizes">
+            <el-table-column label="ID" >
+                <template #default="scope">
+                    {{ scope.row.id === -1 ? "新增" : scope.row.id }}
+                </template>
+            </el-table-column>
+            <el-table-column label="名称" property="prize_name" />
+            <el-table-column label="操作" >
+                <template #default="scope">
+                    <el-button @click="editPrize(scope.row.id)">修改</el-button>
+                    <el-button @click="deletePrize(scope.row.id)">删除</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+    <div v-else>
+        <p class="el-dialog__title">保存后可编辑奖项信息</p>
+    </div>
+
 </el-dialog>
 
 </template>

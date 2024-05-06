@@ -22,7 +22,6 @@ let /** @type {Competition} */ nowCompetition = {}
 const /** @type {import("vue").Ref<CompetitionTerm[]>} */ terms = ref([])
 const /** @type {Map<number, CompetitionTerm>} */ termMap  = new Map()
 const /** @type {import("vue").Ref<CompetitionTerm>} */ editingTerm  = ref()
-let /** @type {CompetitionTerm} */ nowTerm = {}
 
 const /** @type {Map<number, Prize[]>} */ prizes = reactive(new Map())
 
@@ -195,7 +194,7 @@ const onCompetitionSaved = (savedCompetition) => {
 const deleteSelectedTerms = () => {
     let termsToDeleteStr = multipleSelection.value.map(v => v.term_name).join(" ")
     ElMessageBox.confirm(`确定要删除 竞赛届别 ${termsToDeleteStr} 吗？所有涉及的奖项、参赛记录等信息将全部被删除！`).then(() => {
-        api.metadataEditApi.deleteCompetitionTerms(multipleSelection.value.map(v => v.id)).then(res => {
+        api.metadataEditApi.deleteCompetitionTerms(multipleSelection.value.map(v => v.id)).then(() => {
             ElMessage.success(`赛届别 ${termsToDeleteStr} 及其相关信息已删除`)
             loadTerms()
         }).catch(error => {
@@ -210,7 +209,7 @@ const deleteSelectedTerms = () => {
 const deleteTerm = (termId) => {
     let termsToDeleteStr = termMap.get(termId).term_name
     ElMessageBox.confirm(`确定要删除 竞赛届别 ${termsToDeleteStr} 吗？所有涉及的奖项、参赛记录等信息将全部被删除！`).then(() => {
-        api.metadataEditApi.deleteCompetitionTerms([termId]).then(res => {
+        api.metadataEditApi.deleteCompetitionTerms([termId]).then(() => {
             ElMessage.success(`赛届别 ${termsToDeleteStr} 及其相关信息已删除`)
             loadTerms()
         }).catch(error => {
@@ -239,6 +238,7 @@ const editTerm = (termToEdit) => {
  * @param savedTerm {CompetitionTerm}
  */
 const onTermSaved = (savedTerm) => {
+    console.log("SAVED!")
     if(!termMap.has(savedTerm.id)) {
         terms.value.push(savedTerm);
     } else {
@@ -256,7 +256,15 @@ const onTermSaved = (savedTerm) => {
 
 const onTermPrizeSaved = (termId) => {
     prizes.delete(termId)
-    console.log("UPDATED!")
+}
+
+const createTerm = () => {
+    editingTerm.value = {
+        id: -1,
+        term_name: "",
+        level_name: ""
+    }
+    termEditDialogShow.value = true;
 }
 
 </script>
@@ -316,7 +324,7 @@ const onTermPrizeSaved = (termId) => {
 
         竞赛届别：
         <el-button v-if="multipleSelection.length > 0" @click="deleteSelectedTerms">删除所选届别</el-button>
-        <el-button>添加</el-button>
+        <el-button v-if="queryForm.competitionId" @click="createTerm">添加</el-button>
         <el-table :data="terms" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" />
             <el-table-column property="id" label="ID"/>
