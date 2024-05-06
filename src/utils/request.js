@@ -102,15 +102,20 @@ service.interceptors.response.use(function (response) {
 
 export default {
     /**
+     * @param url {string}
+     * @param [data] {any},
+     * @param [config] {axios.AxiosRequestConfig<any>}
      * @return {Promise<ParsedResponse>}
      */
-    post: function () {
+    post: function (url, data, config) {
         return service.post(...arguments)
     },
     /**
+     * @param url {string}
+     * @param [config] {axios.AxiosRequestConfig<any>}
      * @return {Promise<ParsedResponse>}
      */
-    get: function () {
+    get: function (url, config) {
         return service.get(...arguments)
     }
 }

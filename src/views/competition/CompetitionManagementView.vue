@@ -3,39 +3,29 @@
 import {reactive, ref} from "vue";
 import api from "@/api/competition";
 import CompetitionEditDialog from "@/components/CompetitionEditDialog.vue";
+import {ElMessage, ElMessageBox} from "element-plus";
+import TermEditDialog from "@/components/TermEditDialog.vue";
 
 const queryForm = reactive({
     competitionId: null,
     termId: null,
     prizeId: null,
-    awardDate: null,
-    desc: ""
 })
 
 const infoNotChanged = ref(true)
 
-/**
- * @type {import("vue").Ref<Competition[]>}
- */
-const competitions = ref([])
+const /** @type {import("vue").Ref<Competition[]>} */ competitions = ref([])
+const /** @type {Map<number, Competition>} */ competitionMap = new Map()
+const /** @type {import("vue").Ref<Competition>} */ editingCompetition  = ref()
+let /** @type {Competition} */ nowCompetition = {}
 
-/**
- *
- * @type {import("vue").Ref<Competition>}
- */
-const editingCompetition = ref()
+const /** @type {import("vue").Ref<CompetitionTerm[]>} */ terms = ref([])
+const /** @type {Map<number, CompetitionTerm>} */ termMap  = new Map()
+const /** @type {import("vue").Ref<CompetitionTerm>} */ editingTerm  = ref()
+let /** @type {CompetitionTerm} */ nowTerm = {}
 
-/**
- *
- * @type {import("vue").Ref<CompetitionTerm[]>}
- */
-const terms = ref([])
+const /** @type {Map<number, Prize[]>} */ prizes = reactive(new Map())
 
-/**
- *
- * @type { Map<number, Prize[]>}
- */
-const prizes = reactive(new Map())
 const loading = ref(false)
 const operationLogs = ref([])
 
@@ -43,18 +33,33 @@ const organizer = ref()
 const competitionType = ref()
 
 const competitionEditDialogShow = ref(false)
+const termEditDialogShow = ref(false)
+
+const reset = () => {
+    competitions.value = []
+    editingCompetition.value = {}
+    prizes.clear()
+    termMap.clear()
+    terms.value = []
+    queryForm.competitionId = null;
+}
 
 const setInfoChanged = (_) => {
     infoNotChanged.value = false;
 }
 
-const loadCompetitions = (keyword) => {
+function loadCompetitions (keyword) {
     loading.value = true
     if(keyword === ""){
         return;
     }
     api.editApi.queryCompetition(keyword).then(res => {
         competitions.value = res.json.competitions
+        competitionMap.clear()
+        for(let competition of res.json.competitions) {
+            competitionMap.set(competition.id, competition)
+        }
+
         loading.value = false
     }).catch(error => {
         loading.value = false
@@ -68,13 +73,13 @@ const onCompetitionSelected = (competitionId) => {
         return
     }
 
-    for(let t of competitions.value) {
-        if(competitionId === t.id) {
-            competitionType.value = t.type_name
-            organizer.value = t.organizer
-            editingCompetition.value = t
-        }
-    }
+    let t = competitionMap.get(competitionId);
+    if(!t) return;
+
+    competitionType.value = t.type_name
+    organizer.value = t.organizer
+    nowCompetition = t
+
     prizes.clear()
     loadTerms()
 
@@ -92,6 +97,10 @@ const loadTerms = () => {
 
     api.editApi.queryTerm(queryForm.competitionId).then(res => {
         terms.value = res.json.terms
+        termMap.clear()
+        for(let term of res.json.terms) {
+            termMap.set(term.id, term)
+        }
         loading.value = false
     }).catch(error => {
         loading.value = false
@@ -133,7 +142,18 @@ const handleSelectionChange = (val) => {
     multipleSelection.value = val
 }
 
-const startCreate = () => {
+const editCompetition = () => {
+
+    editingCompetition.value = {
+        id: nowCompetition.id,
+        competition_name: nowCompetition.competition_name,
+        organizer: nowCompetition.organizer,
+        type_name: nowCompetition.type_name
+    }
+    competitionEditDialogShow.value = true;
+}
+
+const createCompetition = () => {
     editingCompetition.value = {
         id: -1,
         competition_name: "",
@@ -143,24 +163,100 @@ const startCreate = () => {
     competitionEditDialogShow.value = true;
 }
 
+const deleteCompetition = () => {
+    ElMessageBox.confirm("确认要删除竞赛\"" + nowCompetition.competition_name + "\"吗? 所有涉及的届别、奖项、参赛记录等信息将全部被删除！").then(() => {
+        api.metadataEditApi.deleteCompetition(nowCompetition.id).then(() => {
+            ElMessage.success("竞赛\"" + nowCompetition.competition_name + "\"及其相关记录已全部删除。")
+            reset()
+        }).catch(error => {
+            loading.value = false
+            if(error.network) return
+            error.defaultHandler()
+        })
+    })
+}
+
 /**
  *
  * @param savedCompetition {Competition}
  */
 const onCompetitionSaved = (savedCompetition) => {
-    for(let t of competitions.value) {
-        if(savedCompetition.id === t.id) {
-            for(let k in savedCompetition) {
-                t[k] = savedCompetition[k];
+    let t = competitionMap.get(savedCompetition.id);
+    for(let k in savedCompetition) {
+        t[k] = savedCompetition[k];
+    }
+    competitionType.value = t.type_name
+    organizer.value = t.organizer
+    editingCompetition.value = t
+
+
+}
+
+const deleteSelectedTerms = () => {
+    let termsToDeleteStr = multipleSelection.value.map(v => v.term_name).join(" ")
+    ElMessageBox.confirm(`确定要删除 竞赛届别 ${termsToDeleteStr} 吗？所有涉及的奖项、参赛记录等信息将全部被删除！`).then(() => {
+        api.metadataEditApi.deleteCompetitionTerms(multipleSelection.value.map(v => v.id)).then(res => {
+            ElMessage.success(`赛届别 ${termsToDeleteStr} 及其相关信息已删除`)
+            loadTerms()
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler()
+        })
+    })
+
+
+}
+
+const deleteTerm = (termId) => {
+    let termsToDeleteStr = termMap.get(termId).term_name
+    ElMessageBox.confirm(`确定要删除 竞赛届别 ${termsToDeleteStr} 吗？所有涉及的奖项、参赛记录等信息将全部被删除！`).then(() => {
+        api.metadataEditApi.deleteCompetitionTerms([termId]).then(res => {
+            ElMessage.success(`赛届别 ${termsToDeleteStr} 及其相关信息已删除`)
+            loadTerms()
+        }).catch(error => {
+            if(error.network) return
+            error.defaultHandler()
+        })
+    })
+}
+
+/**
+ *
+ * @param termToEdit {CompetitionTerm}
+ */
+const editTerm = (termToEdit) => {
+
+    editingTerm.value = {
+        id: termToEdit.id,
+        term_name: termToEdit.term_name,
+        level_name: termToEdit.level_name
+    }
+    termEditDialogShow.value = true;
+}
+
+/**
+ *
+ * @param savedTerm {CompetitionTerm}
+ */
+const onTermSaved = (savedTerm) => {
+    if(!termMap.has(savedTerm.id)) {
+        terms.value.push(savedTerm);
+    } else {
+        for(let t of terms.value) {
+            if(t.id === savedTerm.id){
+                t.term_name = savedTerm.term_name;
+                t.level_name = savedTerm.level_name;
+                break;
             }
-            competitionType.value = t.type_name
-            organizer.value = t.organizer
-            editingCompetition.value = t
-            return
+
         }
     }
+    termMap.set(savedTerm.id, savedTerm)
+}
 
-
+const onTermPrizeSaved = (termId) => {
+    prizes.delete(termId)
+    console.log("UPDATED!")
 }
 
 </script>
@@ -197,7 +293,7 @@ const onCompetitionSaved = (savedCompetition) => {
 
             </el-col>
             <el-col :span="6">
-                <el-button @click="startCreate">新建</el-button>
+                <el-button @click="createCompetition">新建</el-button>
                 <el-button>批量导入</el-button>
             </el-col>
         </el-row>
@@ -213,13 +309,14 @@ const onCompetitionSaved = (savedCompetition) => {
                 </el-form-item>
             </el-col>
             <el-col :span="6">
-                <el-button @click="() => {competitionEditDialogShow = true}" >修改竞赛基本信息</el-button>
-                <el-button>删除</el-button>
+                <el-button @click="editCompetition" >修改竞赛基本信息</el-button>
+                <el-button @click="deleteCompetition">删除</el-button>
             </el-col>
         </el-row>
 
         竞赛届别：
-        <el-button v-if="multipleSelection.length > 0">删除所选届别</el-button>
+        <el-button v-if="multipleSelection.length > 0" @click="deleteSelectedTerms">删除所选届别</el-button>
+        <el-button>添加</el-button>
         <el-table :data="terms" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" />
             <el-table-column property="id" label="ID"/>
@@ -237,12 +334,17 @@ const onCompetitionSaved = (savedCompetition) => {
 
             </el-table-column>
             <el-table-column label="操作">
-                <el-button>修改</el-button>
-                <el-button>删除</el-button>
+                <template #default="scope">
+                    <el-button @click="editTerm(scope.row)">修改</el-button>
+                    <el-button @click="deleteTerm(scope.row.id)">删除</el-button>
+                </template>
+
+
             </el-table-column>
         </el-table>
 
         <competition-edit-dialog v-model:show="competitionEditDialogShow" :competition="editingCompetition" @saved="onCompetitionSaved"/>
+        <term-edit-dialog v-model:show="termEditDialogShow" :term="editingTerm" @saved="onTermSaved" :competition-id="queryForm.competitionId" @prize-updated="onTermPrizeSaved(editingTerm.id)"/>
 
 
 

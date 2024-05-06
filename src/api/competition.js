@@ -207,6 +207,13 @@ const checkApi = {
  * @property {number} id
  */
 
+/**
+ *
+ * @typedef {Object} CompetitionLevel
+ * @property {string} levelName
+ * @property {number} id
+ */
+
 const metadataEditApi = {
     /**
      *
@@ -229,7 +236,73 @@ const metadataEditApi = {
             organizer,
             typeId
         })
+    },
+
+    /**
+     *
+     * @param id {number}
+     * @return {Promise<ParsedResponse>}
+     */
+    deleteCompetition: (id) => {
+        return request.post("/api/competition/metadata/deleteCompetition", {
+            id
+        })
+    },
+
+    /**
+     *
+     * @param ids {Array<number>} - 要删除的届别的id列表
+     * @return {Promise<ParsedResponse>}
+     */
+    deleteCompetitionTerms: (ids) => {
+        return request.post("/api/competition/metadata/deleteTerm", {
+            ids
+        })
+    },
+
+    /**
+     *
+     * @return {Promise<ParsedResponse<{
+     *     levels: [CompetitionLevel]
+     * }>>}
+     */
+    getCompetitionLevels: () => {
+        return request.post("/api/competition/metadata/getLevels")
+    },
+
+    editCompetitionTerm: (id, newName, newLevelId, competitionId) => {
+        return request.post("/api/competition/metadata/editTerm", {
+            id,
+            newName,
+            newLevelId,
+            competitionId
+        })
+    },
+
+    deleteCompetitionPrize: (id) => {
+        return request.post("/api/competition/metadata/deletePrize", {
+            id
+        })
+    },
+
+    /**
+     *
+     * @param id
+     * @param newName
+     * @param termId
+     * @return {Promise<ParsedResponse<
+     *  {newPrize: Prize}
+     * >>}
+     */
+    editCompetitionPrize: (id, newName, termId) => {
+        return request.post("/api/competition/metadata/editPrize", {
+            id,
+            newName,
+            termId
+        })
     }
+
+
 }
 
 export default {
