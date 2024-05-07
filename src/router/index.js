@@ -116,6 +116,16 @@ const router = createRouter({
                     component: () => import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
+                    path: "volunteersSearch",
+                    name: "volunteersSearch",
+                    component: () => import("@/views/volunteer/volunteerChecklist.vue"),
+                },
+                {
+                    path: "volunteersCheck",
+                    name: "volunteersCheck",
+                    component: () => import("@/views/volunteer/volunteerCheck.vue"),
+                },
+                {
                     path: "socialWork",
                     name: "socialWork",
                     component: () => import("@/views/social/showSocialWork.vue"),

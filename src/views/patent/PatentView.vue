@@ -1,14 +1,3 @@
-<script setup>
-import { computed, onBeforeMount, reactive, watch } from 'vue'
-import { ElMessage, ElMessageBox, ElUpload, ElDialog, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton } from "element-plus";
-import { ref } from 'vue'
-import { ElTable } from 'element-plus'
-//import api from '@/api/patent'
-import globalData from "@/global/global"
-import router from "@/router";
-
-</script>
-
 <template>
     <div class="viewWrapper">
         <h1 class="pageTitle">专利填报</h1>
@@ -29,7 +18,7 @@ import router from "@/router";
             <el-form-item label="提交日期" prop="submissionDate">
                 <el-date-picker v-model="patent.submissionDate" type="date" placeholder="请选择日期" />
             </el-form-item>
-            
+
             <el-form-item label="专利状态" prop="situation">
                 <el-select v-model="patent.situation" placeholder="请选择专利状态">
                     <el-option label="状态1" value="status1"></el-option>
@@ -42,24 +31,12 @@ import router from "@/router";
                 <el-input type="textarea" v-model="patent.abstract" :rows="4" />
             </el-form-item>
 
-            <el-form-item label="附件上传" prop="evidence">
-                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
-                    :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag multiple>
-                    <el-icon>
-                        <Plus />
-                        <!-- <i class="el-icon-upload"></i> -->
-                    </el-icon>
-                    <div class="upload-text">
-                        拖拽文件至此或 <em>点击上传</em>
-                    </div>
-                </el-upload>
-
-                <el-dialog v-model="attachmentDialogVisible">
-                    <img :src="attachmentDialogImageUrl" alt="附件预览" style="max-width: 100%; max-height: 100%;" />
-                </el-dialog>
-
-            </el-form-item>
-
+            <el-upload style="margin-left: 10%;margin-bottom: 2%;" v-model:file-list="fileList" :before-upload="beforeUpload" 
+                list-type="picture-card" :on-remove="handleRemove" drag multiple>
+                <i class="el-icon-upload"></i>
+                <div class="upload-text">拖拽文件至此，或点击上传</div>
+            </el-upload>
+            
             <el-form-item>
                 <el-button type="primary" @click="onSubmit" plain class="submit-button-create">提交</el-button>
                 <el-button class="submit-button-cancel">取消</el-button>
@@ -81,7 +58,8 @@ import router from "@/router";
 <script>
 
 import api from '@/api/patent';
-
+import test from '@/api/competition'
+import { ElUpload, ElDialog, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton } from "element-plus";
 export default {
 
     data() {
@@ -118,11 +96,18 @@ export default {
     },
 
     methods: {
+        beforeUpload(file) {
+            test.uploadImage('123',file)
+            // 阻止默认的上传行为
+            file.url = URL.createObjectURL(file.raw)
+            // 返回 false 来阻止默认的上传行为
+            return false
+        },
+
         onSubmit() {
             // 提交论文申报日志
             console.log('submit!');
             console.log(this.evidencecheck.attachmentdialogImageUrl);
-
             api.submitCreate({
                 //左边是api中获取的变量，右边是paper中自己设定的变量
                 user_id: 2,
@@ -149,6 +134,7 @@ export default {
         },
 
         handleRemove(uploadFile, uploadFiles) {
+            this.fileList=[],
             console.log(uploadFile, uploadFiles);
         },
 
@@ -181,28 +167,6 @@ export default {
                 console.log('fail');
                 console.log(err);
             }
-        },
-
-        editRecord(patentId) {
-            console.log(patentId);
-            this.$router.push({ name: 'ChangePatentwork', params: { id: patentId } });
-        },
-
-        deleteRecord(nowpatent_id) {
-            console.log(nowpatent_id);
-            console.log('delete record');
-            const patent_id = this.parseToInt(nowpatent_id);
-
-            // Using an arrow function for the API call
-            const res = api.deleteRecord({ patent_id: patent_id });
-            res.then(() => {
-                console.log("成功了"); // "Success"
-            }).catch(() => {
-                console.log("错误了"); // "Error"
-            });
-
-            // Asynchronous operation, this line will execute before the Promise settles
-            console.log(res);
         },
 
     },
