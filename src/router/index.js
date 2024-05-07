@@ -93,6 +93,11 @@ const router = createRouter({
                 {
                     path: "patent",
                     name: "patentView",
+                    component: () => import("@/views/patent/showPatentpage.vue"),
+                },
+                {
+                    path: "patentdetile",
+                    name: "patentdetile",
                     component: () => import("@/views/patent/PatentView.vue"),
                 },
                 {
@@ -103,11 +108,21 @@ const router = createRouter({
                 {
                     path: "volunteers",
                     name: "volunteersView",
+                    component: () => import("@/views/volunteer/showVolunteers.vue"),
+                },
+                {
+                    path: "volunteersdetile",
+                    name: "volunteersdetile",
                     component: () => import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
                     path: "socialWork",
                     name: "socialWork",
+                    component: () => import("@/views/social/showSocialWork.vue"),
+                },
+                {
+                    path: "socialdetile",
+                    name: "socialdetile",
                     component: () => import("@/views/social/SocialWork.vue"),
                 },
                 {
