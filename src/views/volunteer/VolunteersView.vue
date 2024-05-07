@@ -60,48 +60,6 @@
 
 
         </el-form>
-
-        <div class="seperate-words">
-            <h1>历史填报</h1>
-        </div>
-
-        <el-space wrap>
-            <el-card v-for="record in HistoryRecord" :key="record.volId" class="box-card"
-                style="min-width: 250px; min-height: 300px;">
-                <template #header>
-                    <div class="card-header">
-                        <div class="header-left">
-                            <span>{{ record.volName }}</span>
-                        </div>
-                    </div>
-                </template>
-                <div class="text item">
-                    <p><strong>参加时间: </strong>{{ record.participateTime }}</p>
-                    <p><strong>持续时间: </strong>
-                        <span v-if="record.durationDay !== 0">{{ record.durationDay }} 天 </span>
-                        <span v-if="record.durationHour !== 0">{{ record.durationHour }} 小时</span>
-                    </p>
-                    <p><strong>志愿类型: </strong>
-                        <span v-if="record.volType === null" style="color: gray;">未审核</span>
-                        <span v-else style="color: cyan;">{{ record.volType }}</span>
-                    </p>
-                    <p><strong>审核状态: </strong>
-                        <span v-if="record.auditStatus === 'false'" style="color: red;">审核失败</span>
-                        <span v-else-if="record.auditStatus === 'true'" style="color: green;">审核通过</span>
-                        <span v-else style="color: gray;">未审核</span>
-                    </p>
-                    <p><strong>ID: </strong>{{ record.volId }}</p>
-                    <p><strong>证据图片: </strong><img :src="record.evidence" alt="证据图片"></p>
-                </div>
-                <div class="card-footer">
-                    <el-button class="button" text @click="editRecord(record.volId)" type="primary">修改</el-button>
-                    <el-button class="button" text @click="deleteRecord(record.volId)" type="danger">删除</el-button>
-                </div>
-            </el-card>
-        </el-space>
-
-
-
         <el-col>
             <p class="sectionTitle">操作日志</p>
         </el-col>
