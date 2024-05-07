@@ -88,6 +88,7 @@ loginApi.getUserInfo().then(response => {
                 { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" },
                 {"title":"用户管理","icon":"fi-rr-user", "path":"/userManagement"},
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
+                { "title": "竞赛管理", "icon": "fi-rr-settings", "path": "/competitionManage"}
             ]
     }
     loadComplete.value = false;

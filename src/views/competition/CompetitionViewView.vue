@@ -25,12 +25,12 @@ const reloadPage = () => {
         competition.value = res.json.competition
         queryForm.competitionId = competition.value.id
         competitionType.value = competition.value.type_name;
-
+        organizer.value = competition.value.organizer;
 
         term.value = res.json.term
         queryForm.termId = term.value.id
         termLevelName.value = term.value.level_name
-        organizer.value = term.value.organizer;
+
 
         prize.value = res.json.prize
         queryForm.prizeId = prize.value.id

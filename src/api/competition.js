@@ -1,15 +1,55 @@
 import request from "@/utils/request"
 
+/**
+ *
+ * @typedef {Object} Competition
+ * @property {string} organizer
+ * @property {number} id
+ * @property {string} competition_name
+ * @property {string} type_name
+ */
+
+/**
+ * @typedef {Object} CompetitionTerm
+ * @property {number} id - The unique identifier of the competition.
+ * @property {string} term_name - The name of the term.
+ * @property {string} level_name - The level of the competition.
+ */
+
+/**
+ * @typedef {Object} Prize
+ * @property {string} prize_name
+ * @property {number} id
+ * @property {number} prize_order
+ */
+
 const editApi = {
     getTeamInfo: (teamId) => {
         return request.post("/api/competition/getTeamInfo",{team_id: teamId})
     },
+    /**
+     *
+     * @param keyword
+     * @return {Promise<ParsedResponse<{competitions:[Competition]}>>}
+     */
     queryCompetition: (keyword) => {
         return request.post("/api/competition/queryCompetition", {keyword: keyword})
     },
+
+    /**
+     *
+     * @param competitionId
+     * @return {Promise<ParsedResponse<{terms:[CompetitionTerm]}>>}
+     */
     queryTerm: (competitionId) => {
         return request.post("/api/competition/queryTerm", {competition_id: competitionId})
     },
+
+    /**
+     *
+     * @param termId
+     * @return {Promise<ParsedResponse<{prizes:[Prize]}>>}
+     */
     queryPrizeOfTerm: (termId) => {
         return request.post("/api/competition/termPrize", {term_id: termId})
     },
@@ -24,9 +64,9 @@ const editApi = {
         })
     },
     /**
-     * @param teamId: 竞赛信息id
-     * @param basicInfo: 修改后的参赛信息的基本信息，如果没修改设置为null
-     * @param teammates: 修改后的队员贡献排序，如果没修改设置为null
+     * @param teamId 竞赛信息id
+     * @param basicInfo 修改后的参赛信息的基本信息，如果没修改设置为null
+     * @param teammates 修改后的队员贡献排序，如果没修改设置为null
      */
     editTeam: (teamId, basicInfo, teammates) => {
         return request.post("/api/competition/editTeam",{
@@ -60,8 +100,8 @@ const editApi = {
     },
 
     /**
-     * @param teamId: 竞赛信息id
-     * @param {boolean} isVerified: 是否确认排名
+     * @param teamId 竞赛信息id
+     * @param {boolean} isVerified 是否确认排名
      */
     setRandVerification: (teamId, isVerified) => {
         return request.post("/api/competition/setVerification",{
@@ -160,8 +200,124 @@ const checkApi = {
     },
 }
 
+/**
+ *
+ * @typedef {Object} CompetitionType
+ * @property {string} name
+ * @property {number} id
+ */
+
+/**
+ *
+ * @typedef {Object} CompetitionLevel
+ * @property {string} levelName
+ * @property {number} id
+ */
+
+const metadataEditApi = {
+    /**
+     *
+     * @return {Promise<ParsedResponse<{
+     *     types: [CompetitionType]
+     * }>>}
+     */
+    getCompetitionTypes: () => {
+        return request.post("/api/competition/metadata/getTypes")
+    },
+
+    /**
+     *
+     * @return {Promise<ParsedResponse>}
+     */
+    editCompetition: (id, name, organizer, typeId) => {
+        return request.post("/api/competition/metadata/editCompetition", {
+            id,
+            name,
+            organizer,
+            typeId
+        })
+    },
+
+    /**
+     *
+     * @param id {number}
+     * @return {Promise<ParsedResponse>}
+     */
+    deleteCompetition: (id) => {
+        return request.post("/api/competition/metadata/deleteCompetition", {
+            id
+        })
+    },
+
+    /**
+     *
+     * @param ids {Array<number>} - 要删除的届别的id列表
+     * @return {Promise<ParsedResponse>}
+     */
+    deleteCompetitionTerms: (ids) => {
+        return request.post("/api/competition/metadata/deleteTerm", {
+            ids
+        })
+    },
+
+    /**
+     *
+     * @return {Promise<ParsedResponse<{
+     *     levels: [CompetitionLevel]
+     * }>>}
+     */
+    getCompetitionLevels: () => {
+        return request.post("/api/competition/metadata/getLevels")
+    },
+
+    /**
+     *
+     * @param id
+     * @param newName
+     * @param newLevelId
+     * @param competitionId
+     * @return {Promise<ParsedResponse<
+     *  {newTerm: CompetitionTerm}
+     * >>}
+     */
+    editCompetitionTerm: (id, newName, newLevelId, competitionId) => {
+        return request.post("/api/competition/metadata/editTerm", {
+            id,
+            newName,
+            newLevelId,
+            competitionId
+        })
+    },
+
+    deleteCompetitionPrize: (id) => {
+        return request.post("/api/competition/metadata/deletePrize", {
+            id
+        })
+    },
+
+    /**
+     *
+     * @param id
+     * @param newName
+     * @param termId
+     * @return {Promise<ParsedResponse<
+     *  {newPrize: Prize}
+     * >>}
+     */
+    editCompetitionPrize: (id, newName, termId) => {
+        return request.post("/api/competition/metadata/editPrize", {
+            id,
+            newName,
+            termId
+        })
+    }
+
+
+}
+
 export default {
     editApi,
     viewApi,
-    checkApi
+    checkApi,
+    metadataEditApi
 }
