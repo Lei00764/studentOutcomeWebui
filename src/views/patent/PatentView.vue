@@ -30,11 +30,15 @@
                 <el-input type="textarea" v-model="patent.abstract" :rows="4" />
             </el-form-item>
 
-            <el-upload style="margin-left: 10%;margin-bottom: 2%;" v-model:file-list="fileList" :before-upload="beforeUpload"
-                       list-type="picture-card" :on-remove="handleRemove" drag multiple>
-                <i class="el-icon-upload"></i>
-                <div class="upload-text">拖拽文件至此，或点击上传</div>
-            </el-upload>
+            <el-form-item label="证明材料">
+                <certificate-upload
+                    ref="certificateUpload"
+                    @image-changed="onCertImgChanged"
+                    v-model:cert-url="patent.attachment"
+                    record-type="patent"
+                    :record-id="patentId"
+                />
+            </el-form-item>
 
 
         </el-form>
@@ -67,7 +71,10 @@ import api from '@/api/patent';
 import test from '@/api/competition'
 import {ElUpload, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton, ElMessage} from "element-plus";
 import router from "@/router";
+import CertificateUpload from "@/components/CertificateUpload.vue";
+import {nextTick} from "vue";
 export default {
+    components: {CertificateUpload},
 
     data() {
         return {
@@ -77,9 +84,11 @@ export default {
                 author: '',
                 submissionDate: '',
                 abstract: '',
-                situation: 0
+                situation: 0,
+                attachment: ""
             },
             verify_status: 0,
+            certImgChanged: false,
 
             /**
              * @type PatentState[]
@@ -92,12 +101,6 @@ export default {
                 submissionDate: [{ required: true, message: '请选择提交日期', trigger: 'change' }],
                 situation: [{ required: true, message: '请填写专利状态', trigger: 'blur' }],
                 abstract: [{ required: true, message: '请填写摘要', trigger: 'blur' }],
-            },
-
-            evidencecheck: {
-                attachmentdialogImageUrl: '',
-                attachmentDialogVisible: false,
-                disabled: false,
             },
 
             HistoryRecord: [],
@@ -113,18 +116,13 @@ export default {
     },
 
     methods: {
-        beforeUpload(file) {
-            test.uploadImage('123',file)
-            // 阻止默认的上传行为
-            file.url = URL.createObjectURL(file.raw)
-            // 返回 false 来阻止默认的上传行为
-            return false
+        onCertImgChanged() {
+            this.certImgChanged = true;
         },
 
         onSubmit() {
             // 提交论文申报日志
-            console.log('submit!');
-            console.log(this.evidencecheck.attachmentdialogImageUrl);
+
             /**
              * @type Patent
              */
@@ -143,8 +141,16 @@ export default {
             if(this.patentId === -1) {
                 api.submitCreate(newPatent)
                     .then((res) => {
+                        this.patentId = res.json.newPatentId;
                         ElMessage.success("成功创建专利信息");
-                        router.push("/patentDetail/" + res.json.newPatentId)
+                        nextTick(async () => {
+                            if(this.certImgChanged) {
+                                await this.$refs.certificateUpload.uploadImg()
+                            }
+
+                            await router.push("/patentDetail/" + res.json.newPatentId)
+                        })
+
                     }).catch(error => {
                     if(error.network) return;
                     error.defaultHandler()
@@ -153,15 +159,16 @@ export default {
                 api.changeRecord(newPatent)
                     .then((res) => {
                         ElMessage.success("成功保存专利信息")
-                    }).catch(error => {
-                    if(error.network) return;
-                    error.defaultHandler()
+                    }).then(() => {
+                    if(this.certImgChanged) {
+                        return this.$refs.certificateUpload.uploadImg()
+                    }
                 })
+                    .catch(error => {
+                        if(error.network) return;
+                        error.defaultHandler()
+                    })
             }
-
-
-
-
         },
 
         onSubmitToReview() {
@@ -220,6 +227,7 @@ export default {
                         this.patent.situation = remotePatent.patent_situation
                         this.patent.author = remotePatent.patent_author
                         this.patent.submissionDate = remotePatent.submission_date
+                        this.patent.attachment = remotePatent.attachments ? "/certImg/" + remotePatent.attachments : null;
                         this.verify_status = remotePatent.verify_status
 
                         this.operationLogs = res.json.logs
