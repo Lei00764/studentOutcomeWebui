@@ -101,8 +101,8 @@ const router = createRouter({
                     component: () => import("@/views/patent/showPatentpage.vue"),
                 },
                 {
-                    path: "patentdetile",
-                    name: "patentdetile",
+                    path: "patentDetail/:teamId",
+                    name: "patentDetail",
                     component: () => import("@/views/patent/PatentView.vue"),
                 },
                 {
@@ -116,8 +116,8 @@ const router = createRouter({
                     component: () => import("@/views/volunteer/showVolunteers.vue"),
                 },
                 {
-                    path: "volunteersdetile",
-                    name: "volunteersdetile",
+                    path: "volunteersDetail",
+                    name: "volunteersDetail",
                     component: () => import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
@@ -126,8 +126,8 @@ const router = createRouter({
                     component: () => import("@/views/social/showSocialWork.vue"),
                 },
                 {
-                    path: "socialdetile",
-                    name: "socialdetile",
+                    path: "socialDetail",
+                    name: "socialDetail",
                     component: () => import("@/views/social/SocialWork.vue"),
                 },
                 {
