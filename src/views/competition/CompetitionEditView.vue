@@ -2,9 +2,10 @@
 import {useRoute} from "vue-router";
 import router from "@/router";
 import {computed, reactive, ref, watch, h} from "vue";
-import {ElMessage, ElMessageBox, genFileId} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import globalData from "@/global/global"
 import api from "@/api/competition";
+import CertificateUpload from "@/components/CertificateUpload.vue";
 
 const routerWatchable = useRoute()
 
@@ -19,15 +20,20 @@ const actionText = computed(()=>{
 
 let pageMode = router.currentRoute.value.name;
 let teamId = 0;
+const teamIdRef = ref(0)
 
-if(router.currentRoute.value.params?.teamId)
+if(router.currentRoute.value.params?.teamId) {
     teamId = parseInt(router.currentRoute.value.params?.teamId)
+    teamIdRef.value = teamId;
+}
 
 watch(routerWatchable,(old,newRoute)=>{
     if(pageMode==="teamNew")
         return;
-    if(router.currentRoute.value.params?.teamId)
+    if(router.currentRoute.value.params?.teamId) {
         teamId = parseInt(router.currentRoute.value.params?.teamId)
+        teamIdRef.value = teamId;
+    }
     if(typeof(newRoute.params.teamId) !== "undefined")
         reloadPage();
 })
@@ -72,7 +78,7 @@ const competitions = ref([])
 const terms = ref([])
 const prizes = ref([])
 const loading = ref(false)
-const certificationPictures = ref([])
+
 const operationLogs = ref([])
 const teammates = ref([])
 
@@ -90,6 +96,8 @@ const queryForm = reactive({
 const organizer = ref()
 const termLevelName = ref()
 const competitionType = ref()
+
+const certificateUpload = ref()
 
 const loadCompetitions = (keyword) => {
     loading.value = true
@@ -115,6 +123,12 @@ const loadTerms = () => {
         return
     }
 
+    for(let competition of competitions.value) {
+        competitionType.value = competition.type_name
+        organizer.value = competition.organizer
+    }
+
+
 
     api.editApi.queryTerm(queryForm.competitionId).then(res => {
         terms.value = res.json.terms
@@ -135,8 +149,6 @@ const onTermSelected = () => {
     for(let t of terms.value){
         if(t.id === queryForm.termId){
             termLevelName.value = t.level_name;
-            competitionType.value = t.type_name
-            organizer.value = t.organizer
 
         }
     }
@@ -150,20 +162,7 @@ const onTermSelected = () => {
     })
 }
 
-// upload 的图片超过上限，把原来的图片换掉
-const elUploadImg = ref()
-const swapImg = (newFileList) => {
-    elUploadImg.value.clearFiles()
-    let file = newFileList[0]
-    file.uid = genFileId()
-    console.log(file)
-    elUploadImg.value.handleStart(file)
-}
-let certFile = null
-const onImgUpload = (file)=> {
-    certFile = file
-    isCertImageChanged.value = true
-}
+
 
 const checkFrom = () => {
     return queryForm.competitionId && queryForm.termId && queryForm.prizeId && queryForm.awardDate;
@@ -182,13 +181,16 @@ const onSaveButtonClicked = ()=>{
             queryForm.prizeId,
             queryForm.awardDate,
             queryForm.desc
-        ).then(async res => {
+        ).then(res => {
             teamId = res.json.team_id;
-            console.log(certificationPictures.value)
-            await uploadImg()
-            ElMessage.success("竞赛信息保存成功")
-            await router.replace("/competition/edit/" + res.json.team_id)
-            reloadPage()
+            teamIdRef.value = teamId;
+            setTimeout(async () => {
+                await certificateUpload.value.uploadImg()
+                ElMessage.success("竞赛信息保存成功")
+                await router.replace("/competition/edit/" + res.json.team_id)
+                reloadPage()
+            }, 0)
+
         }).catch(error => {
             if(error.network) return
             switch (error.errorCode) {
@@ -224,7 +226,7 @@ const onSaveButtonClicked = ()=>{
             },
             teammatesNotChanged.value ? null : postDataTeammates
         ).then(async res => {
-            await uploadImg()
+            await certificateUpload.value.uploadImg()
             ElMessage.success("竞赛信息保存成功")
             window.location.reload();
         }).catch(error => {
@@ -249,41 +251,7 @@ const onSaveButtonClicked = ()=>{
     }
 }
 
-// 可以判断需不需要上传图片，不用加其他判断了
-const uploadImg = async () => {
-    console.log(certFile)
-    if (!certFile && !isCertImageChanged.value)
-        return;
 
-    // 这时候需要清除图片
-    if (!certFile && isCertImageChanged.value){
-        try {
-            let res = await api.editApi.clearCertImage(teamId)
-            ElMessage.success("证书清除成功")
-        }catch(error){
-            loading.value = false
-            if (error.network) return
-            error.defaultHandler()
-        }
-        return
-    }
-
-
-    try {
-        let res = await api.editApi.uploadImage(teamId, certFile.raw);
-
-        ElMessage.success("证书上传成功")
-    }catch(error){
-        loading.value = false
-        if (error.network) return
-        switch (error.errorCode){
-            case 611:
-                ElMessage.error("证书上传失败，请重试")
-                return;
-        }
-        error.defaultHandler()
-    }
-}
 
 const sortedTeammates = computed(()=>{
     let ans =  teammates.value.toSorted((a, b) => a.order - b.order);
@@ -321,10 +289,7 @@ const teammateRowClassName = ({row, rowIndex}) => {
 }
 
 
-const onClearOriginalCertImage = () => {
-    certUrl.value = ""
-    isCertImageChanged.value = true
-}
+
 
 const onCreateCodeClicked = () => {
     api.editApi.createInvitationCode(teamId).then(res => {
@@ -405,6 +370,9 @@ const cancelVerified = (row) => {
     })
 }
 
+const onImageChanged = () => {
+    isCertImageChanged.value = true
+}
 
 </script>
 
@@ -510,20 +478,13 @@ const cancelVerified = (row) => {
         <el-row>
             <el-col :span="24">
                 <el-form-item label="证书">
-                    <el-upload action="" :file-list="certificationPictures" accept=".jpg, .jpeg, .png"
-                               :auto-upload="false" list-type="picture" :limit="1" :on-exceed="swapImg"
-                               ref="elUploadImg" :on-change="onImgUpload">
-                        <el-button type="primary">点击选择</el-button>
-                        <el-text>&nbsp允许.jpg/.png图片</el-text>
-                        <template #tip>
-                            <div v-if="!isCertImageChanged && certUrl">
-                                <el-image style="max-width: 800px; height: 100px; margin-top:10px; width: auto"
-                                          fit="contain" :src="certUrl" :preview-src-list="[certUrl]"/>
-                                <el-button link @click="onClearOriginalCertImage">清除</el-button>
-                            </div>
-
-                        </template>
-                    </el-upload>
+                    <certificate-upload
+                        ref="certificateUpload"
+                        @image-changed="onImageChanged"
+                        v-model:cert-url="certUrl"
+                        record-type="competition"
+                        :record-id="teamIdRef"
+                    />
                 </el-form-item>
             </el-col>
         </el-row>

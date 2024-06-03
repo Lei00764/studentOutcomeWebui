@@ -1,23 +1,12 @@
-<script setup>
-import { computed, onBeforeMount, reactive, watch } from 'vue'
-import { ElMessage, ElMessageBox, ElUpload, ElDialog, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton } from "element-plus";
-import { ref } from 'vue'
-import { ElTable } from 'element-plus'
-//import api from '@/api/patent'
-import globalData from "@/global/global"
-import router from "@/router";
-
-</script>
-
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">专利填报</h1>
+        <h1 class="pageTitle"> {{ patentId === -1? "新增": "修改" }}专利信息</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以新建、修改专利申报信息。
+            帮助：在本页面中，您可以新建、修改专利申报信息。请先保存再提交审核。
         </div>
 
 
-        <el-form :model="patent" label-width="120px" status-icon :rules="rules">
+        <el-form :model="patent" label-width="120px" status-icon :rules="rules" :disabled="verify_status === 2 || verify_status === 1">
             <el-form-item label="专利标题" prop="title">
                 <el-input v-model="patent.title" />
             </el-form-item>
@@ -29,12 +18,11 @@ import router from "@/router";
             <el-form-item label="提交日期" prop="submissionDate">
                 <el-date-picker v-model="patent.submissionDate" type="date" placeholder="请选择日期" />
             </el-form-item>
-            
+
             <el-form-item label="专利状态" prop="situation">
                 <el-select v-model="patent.situation" placeholder="请选择专利状态">
-                    <el-option label="状态1" value="status1"></el-option>
-                    <el-option label="状态2" value="status2"></el-option>
-                    <el-option label="状态3" value="status3"></el-option>
+                    <el-option v-for="state in patentStates" :label="state.state_name" :value="state.id" :key="state.id"></el-option>
+
                 </el-select>
             </el-form-item>
 
@@ -42,35 +30,34 @@ import router from "@/router";
                 <el-input type="textarea" v-model="patent.abstract" :rows="4" />
             </el-form-item>
 
-            <el-form-item label="附件上传" prop="evidence">
-                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
-                    :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag multiple>
-                    <el-icon>
-                        <Plus />
-                        <!-- <i class="el-icon-upload"></i> -->
-                    </el-icon>
-                    <div class="upload-text">
-                        拖拽文件至此或 <em>点击上传</em>
-                    </div>
-                </el-upload>
-
-                <el-dialog v-model="attachmentDialogVisible">
-                    <img :src="attachmentDialogImageUrl" alt="附件预览" style="max-width: 100%; max-height: 100%;" />
-                </el-dialog>
-
+            <el-form-item label="证明材料">
+                <certificate-upload
+                    ref="certificateUpload"
+                    @image-changed="onCertImgChanged"
+                    v-model:cert-url="patent.attachment"
+                    record-type="patent"
+                    :record-id="patentId"
+                />
             </el-form-item>
 
+
+        </el-form>
+        <el-form label-width="120px">
             <el-form-item>
-                <el-button type="primary" @click="onSubmit" plain class="submit-button-create">提交</el-button>
-                <el-button class="submit-button-cancel">取消</el-button>
+                <el-button v-if="verify_status!== 2 && verify_status!== 1" type="primary" @click="onSubmit" plain class="submit-button-create">保存</el-button>
+                <el-button type="primary" @click="onSubmitToReview" plain class="submit-button-create"
+                           v-if="patentId !== -1 && verify_status=== 0 || verify_status=== 3">提交审核</el-button>
+                <el-button type="primary" @click="onWithdrawReview" plain class="submit-button-create"
+                           v-if="patentId !== -1 && verify_status=== 2 || verify_status=== 1 ">撤回修改</el-button>
             </el-form-item>
         </el-form>
+
         <el-col>
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.time">
-                {{ activity.msg }}
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.operation_time">
+                {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>
 
@@ -81,18 +68,32 @@ import router from "@/router";
 <script>
 
 import api from '@/api/patent';
-
+import test from '@/api/competition'
+import {ElUpload, ElInput, ElDatePicker, ElForm, ElFormItem, ElButton, ElMessage} from "element-plus";
+import router from "@/router";
+import CertificateUpload from "@/components/CertificateUpload.vue";
+import {nextTick} from "vue";
 export default {
+    components: {CertificateUpload},
 
     data() {
         return {
+            patentId: -1,
             patent: {
                 title: '',
                 author: '',
                 submissionDate: '',
                 abstract: '',
-                situation: ''
+                situation: 0,
+                attachment: ""
             },
+            verify_status: 0,
+            certImgChanged: false,
+
+            /**
+             * @type PatentState[]
+             */
+            patentStates: [],
 
             rules: {
                 title: [{ required: true, message: '请填写专利标题', trigger: 'blur' }],
@@ -102,14 +103,11 @@ export default {
                 abstract: [{ required: true, message: '请填写摘要', trigger: 'blur' }],
             },
 
-            evidencecheck: {
-                attachmentdialogImageUrl: '',
-                attachmentDialogVisible: false,
-                disabled: false,
-            },
-
             HistoryRecord: [],
 
+            /**
+             * @type PatentOperationLog[]
+             */
             operationLogs: [],
 
             fileList: [],
@@ -118,28 +116,79 @@ export default {
     },
 
     methods: {
+        onCertImgChanged() {
+            this.certImgChanged = true;
+        },
+
         onSubmit() {
             // 提交论文申报日志
-            console.log('submit!');
-            console.log(this.evidencecheck.attachmentdialogImageUrl);
 
-            api.submitCreate({
+            /**
+             * @type Patent
+             */
+            let newPatent = {
                 //左边是api中获取的变量，右边是paper中自己设定的变量
-                user_id: 2,
-                patent_title: this.patent.title,
+                patent_abstract: this.patent.abstract,
+                submission_date: new Date(this.patent.submissionDate).toISOString().split('T')[0],
+                attachments:  "", // 服务器在更新时会忽略本字段，需要从uploadImg接口进行更新
                 patent_author: this.patent.author,
-                submissionDate: new Date(this.patent.submissionDate).toISOString().split('T')[0],
-                evidence: this.evidencecheck.attachmentdialogImageUrl,
-            })
+                patent_title: this.patent.title,
+                id: this.patentId,
+                patent_situation: this.patent.situation,
+                verify_status: -1
+            }
 
-                .then((res) => {
-                    console.log(res.status);
+            if(this.patentId === -1) {
+                api.submitCreate(newPatent)
+                    .then((res) => {
+                        this.patentId = res.json.newPatentId;
+                        ElMessage.success("成功创建专利信息");
+                        nextTick(async () => {
+                            if(this.certImgChanged) {
+                                await this.$refs.certificateUpload.uploadImg()
+                            }
+
+                            await router.push("/patentDetail/" + res.json.newPatentId)
+                        })
+
+                    }).catch(error => {
+                    if(error.network) return;
+                    error.defaultHandler()
                 })
-                .catch((error) => {
-                    console.error('Error enrolling in training:', error);
-                });
+            } else {
+                api.changeRecord(newPatent)
+                    .then((res) => {
+                        ElMessage.success("成功保存专利信息")
+                    }).then(() => {
+                    if(this.certImgChanged) {
+                        return this.$refs.certificateUpload.uploadImg()
+                    }
+                })
+                    .catch(error => {
+                        if(error.network) return;
+                        error.defaultHandler()
+                    })
+            }
+        },
 
-            location.reload();
+        onSubmitToReview() {
+            api.submitToReview(this.patentId).then(res => {
+                ElMessage.success("成功提交审核")
+                this.verify_status = 1;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
+        },
+
+        onWithdrawReview() {
+            api.withdrawReview(this.patentId).then(res => {
+                ElMessage.success("成功撤回审核申请")
+                this.verify_status = 0;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
         },
 
         handlePictureCardPreview(uploadFile) {
@@ -149,6 +198,7 @@ export default {
         },
 
         handleRemove(uploadFile, uploadFiles) {
+            this.fileList=[]
             console.log(uploadFile, uploadFiles);
         },
 
@@ -160,56 +210,55 @@ export default {
             return parsedValue;
         },
 
-        async getHistoryRecord(value) {
-            const userid = this.parseToInt(value);
-            try {
-                const res = await api.getRecord({ user_id: userid });
-                if (res.status === 200) {
-                    console.log('success');
-                    this.HistoryRecord = res.data.data.map((record) => ({
-                        //右边是apifox变量，左边是自己设的变量(和上文的函数要相对应)
-                        submissionDate: record.submissionDate,
-                        author: record.patent_author,
-                        title: record.patent_title,
-                        evidence: record.evidence,
-                        auditStatus: record.patent_situation,
-                        patentId: record.patent_id,
-                        abstract: record.patent_abstract,
-                    }));
+        reload() {
+            api.getStates().then(res => {
+                this.patentStates = res.json.states
+                this.patent.situation = res.json.states[0].id
+            }).then(() => {
+
+                if(router.currentRoute.value.params?.teamId === "new") {
+                    this.patentId = -1
+                } else {
+                    this.patentId = parseInt(router.currentRoute.value.params.teamId)
+                    return api.selectStuRecordById(this.patentId).then(res => {
+                        let remotePatent = res.json.patent
+                        this.patent.title = remotePatent.patent_title
+                        this.patent.abstract = remotePatent.patent_abstract
+                        this.patent.situation = remotePatent.patent_situation
+                        this.patent.author = remotePatent.patent_author
+                        this.patent.submissionDate = remotePatent.submission_date
+                        this.patent.attachment = remotePatent.attachments ? "/certImg/" + remotePatent.attachments : null;
+                        this.verify_status = remotePatent.verify_status
+
+                        this.operationLogs = res.json.logs
+
+                    })
+
                 }
-            } catch (err) {
-                console.log('fail');
-                console.log(err);
-            }
-        },
 
-        editRecord(patentId) {
-            console.log(patentId);
-            this.$router.push({ name: 'ChangePatentwork', params: { id: patentId } });
-        },
-
-        deleteRecord(nowpatent_id) {
-            console.log(nowpatent_id);
-            console.log('delete record');
-            const patent_id = this.parseToInt(nowpatent_id);
-
-            // Using an arrow function for the API call
-            const res = api.deleteRecord({ patent_id: patent_id });
-            res.then(() => {
-                console.log("成功了"); // "Success"
-            }).catch(() => {
-                console.log("错误了"); // "Error"
-            });
-
-            // Asynchronous operation, this line will execute before the Promise settles
-            console.log(res);
-        },
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
+        }
 
     },
+
 
     mounted() {
-        this.getHistoryRecord(2);
+        this.reload()
     },
+
+    watch: {
+        $route(newRoute) {
+            if(!newRoute.path.startsWith("/patentDetail"))
+                return
+
+            if(router.currentRoute.value.params?.teamId !== this.patentId) {
+                this.reload()
+            }
+        }
+    }
 
 };
 </script>

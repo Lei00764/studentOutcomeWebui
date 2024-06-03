@@ -75,19 +75,6 @@ const editApi = {
             teammates: teammates
         })
     },
-    clearCertImage: (teamId) => {
-        return request.post("/api/competition/imgClear", {team_id: teamId})
-    },
-    uploadImage: (teamId, imgBlob) => {
-        return request.post("/api/competition/imgUpload", {
-            team_id: teamId,
-            image: imgBlob
-        }, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        })
-    },
     createInvitationCode: (teamId) => {
         return request.post("/api/competition/createInvitationCode",{
             team_id: teamId,
