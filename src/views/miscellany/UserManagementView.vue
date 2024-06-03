@@ -197,9 +197,8 @@ const onUpload = () => {
         <el-dialog v-model="fileUploadDialogVisible" title="上传文件" >
             <div style="text-align: center;">
                 <p>请上传学生Excel表</p>
-                <p>系统将先根据 学号 更新系统中的账户信息，后将加入系统中不存在的账户。</p>
-                <p>Excel表要求：账户数据从第二行开始，</p>
-                <p>列要求：A学号、B姓名、C年级、D初始密码</p>
+                <p>系统将先根据 学号 加入系统中不存在的账户。</p>
+                <p>Excel表要求：账户数据从第二行开始。列要求：A学号、B姓名、C年级、D初始密码</p>
                 <p>除了学号外，其余列允许为空，当密码为空时，初始密码为学号。</p>
                 <input type="file" ref="file1" accept=".xlsx">
             </div>

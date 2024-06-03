@@ -1,34 +1,111 @@
 import request from "@/utils/request"
 
-const submitCreate = (params) => {
-    return request({
-        url: '/api/patent/insertPatents',
-        method: 'post',
-        params
+/**
+ *
+ * @typedef {Object} Patent
+ * @property {number} id
+ * @property {string} patent_title
+ * @property {string} patent_author
+ * @property {string} submission_date
+ * @property {string} patent_abstract
+ * @property {string} attachments
+ * @property {number} patent_situation
+ * @property {number} verify_status
+ */
+
+/**
+ * @typedef {Object} PatentState
+ * @property {number} id
+ * @property {string} state_name
+ */
+
+/**
+ * @typedef {Object} PatentOperationLog
+ * Creates an instance of PatentOperationLog.
+ * @property {string} operation_time - The time of the operation.
+ * @property {string} operation_text - The text describing the operation.
+ * @property {number} operation_level - The level of the operation.
+ */
+
+/**
+ *
+ * @return {Promise<ParsedResponse<{
+ *     states: [PatentState]
+ * }>>}
+ */
+const getStates = () => {
+    return request.get("/api/patent/getStates");
+}
+
+/**
+ *
+ * @param {Patent} newPatent
+ * @return {Promise<ParsedResponse<{
+ *     newPatentId: number
+ * }>>}
+ */
+const submitCreate = (newPatent) => {
+    return request.post(
+        '/api/patent/insertPatent', {
+            newPatent
+        }
+    )
+}
+
+/**
+ * @param {number} patentId
+ * @return {Promise<ParsedResponse<{
+ *     patent: Patent
+ *     logs: [PatentOperationLog]
+ * }>>}
+ */
+const selectStuRecordById = (patentId) => {
+    return request.post('/api/patent/selectStuRecordById', {
+        patentId
     })
 }
 
-const getRecord = (params) => {
-    return request({
-        url: '/api/patent/selectStuRecord',
-        method: 'get',
-        params
+/**
+ *
+ * @return {Promise<ParsedResponse<{
+ *     patents: [Patent]
+ * }>>}
+ */
+const getRecord = () => {
+    return request.get('/api/patent/selectStuRecord')
+}
+
+/**
+ *
+ * @param {number} patentId
+ * @return {Promise<ParsedResponse>}
+ */
+const deleteRecord = (patentId) => {
+    return request.post('/api/patent/deleteStuRecord', {
+        patentId
     })
 }
 
-const deleteRecord = (params) => {
-    return request({
-        url: '/api/patent/deleteStuRecord',
-        method: 'post',
-        params
+/**
+ *
+ * @param {Patent} newPatent
+ * @return {Promise<ParsedResponse>}
+ */
+const changeRecord = (newPatent) => {
+    return request.post('/api/patent/changePatent', {
+        newPatent
     })
 }
 
-const changeRecord = (params) => {
-    return request({
-        url: '/api/patent/changepatent',
-        method: 'post',
-        params
+const submitToReview = (patentId) => {
+    return request.post('/api/patent/submitToReview', {
+        patentId
+    })
+}
+
+const withdrawReview = (patentId) => {
+    return request.post('/api/patent/withdrawReview', {
+        patentId
     })
 }
 
@@ -177,4 +254,5 @@ export default {
     changeRecord,
     editApi,
     checkApi
+
 }
