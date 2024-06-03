@@ -79,6 +79,23 @@ const router = createRouter({
                         },
 
                     ]
+                }, 
+                {
+                    path: "patentCheck",
+                    name: "patentCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "patentCheckHomeView",
+                            component: () => import("@/views/patent/PatentCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "patentCheck",
+                            component: () => import("@/views/patent/PatentCheckView.vue")
+                        },
+
+                    ]
                 },
                 {
                     path: "competitionManage",
