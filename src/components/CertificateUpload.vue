@@ -61,13 +61,18 @@ const uploadImg = async () => {
     }
 }
 
+const revertChange = () => {
+    isCertImageChanged.value = false
+    elUploadImg.value.clearFiles()
+}
+
 const onClearOriginalCertImage = () => {
     certUrl.value = ""
     isCertImageChanged.value = true
     emit("imageChanged")
 }
 
-defineExpose({uploadImg})
+defineExpose({uploadImg, revertChange})
 watch(certUrl, (c) => {
     console.log(c, "ddddd")
 })

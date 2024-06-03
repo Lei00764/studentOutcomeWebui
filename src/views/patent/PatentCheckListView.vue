@@ -58,6 +58,8 @@ const statusCode = {
     3: { name: "审核不通过", tagType: "danger" }
 }
 
+
+let patentStates = {}
 /**
  * @typedef FieldSelection 一个字段的所有可选关键词
  * @property {string} name 关键词显示名
@@ -237,19 +239,26 @@ onBeforeMount(() => {
     // 预先设置好选择“等待审核”状态
 
     selectedFields.value.push({
-        f: searchableFields[4],
+        f: searchableFields[2],
         sf: { field: 'verify_status', keyword: 1 }
     })
-    getPatent()
+
+    api.getStates().then(res => {
+        for(let state of res.json.states) {
+            patentStates[state.id] = state.state_name
+        }
+    }).then(() => {
+        getPatent()
+    })
 })
 
 </script>
 
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">审核参赛记录</h1>
+        <h1 class="pageTitle">审核专利记录</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以查询并审核学生提交的参赛记录。查询条件间的关系为“与”
+            帮助：在本页面中，您可以查询并审核学生提交的记录记录。查询条件间的关系为“与”
         </div>
         <div>
             <el-form :inline="true" class="queryForm">
@@ -321,12 +330,18 @@ onBeforeMount(() => {
 
         <el-table ref="multipleTableRef" :data="content.v" style="width: 100%" @selection-change="handleSelectionChange">
     <el-table-column property="id" label="ID" />
+            <el-table-column property="stu_name" label="申请学生"></el-table-column>
     <el-table-column property="patent_title" label="专利名称" />
     <el-table-column property="patent_author" label="专利作者" />
+            <el-table-column label="专利状态">
+                <template #default="scope">
+                        {{ patentStates[scope.row.patent_situation] }}
+                </template>
+            </el-table-column>
     <el-table-column label="审核状态">
         <template #default="scope">
-            <el-tag :type="statusCode[scope.row.status_code].tagType">
-                {{ statusCode[scope.row.status_code].name }}
+            <el-tag :type="statusCode[scope.row.verify_status].tagType">
+                {{ statusCode[scope.row.verify_status].name }}
             </el-tag>
         </template>
     </el-table-column>

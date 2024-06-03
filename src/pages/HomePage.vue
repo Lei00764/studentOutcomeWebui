@@ -66,7 +66,6 @@ loginApi.getUserInfo().then(response => {
     isLogin.value = true;
     gotUserInfo.value = true
 
-    responseObj.group_id = 3
     switch (responseObj.group_id) {
         case 2:
             menus.v = [

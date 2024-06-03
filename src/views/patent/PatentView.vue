@@ -130,7 +130,7 @@ export default {
                 //左边是api中获取的变量，右边是paper中自己设定的变量
                 patent_abstract: this.patent.abstract,
                 submission_date: new Date(this.patent.submissionDate).toISOString().split('T')[0],
-                attachments:  "", // this.evidencecheck.attachmentdialogImageUrl,
+                attachments:  "", // 服务器在更新时会忽略本字段，需要从uploadImg接口进行更新
                 patent_author: this.patent.author,
                 patent_title: this.patent.title,
                 id: this.patentId,
