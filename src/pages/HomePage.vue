@@ -84,11 +84,12 @@ loginApi.getUserInfo().then(response => {
 
                 { "title": "首页", "icon": "fi-rr-home", "path": "/" },
                 { "title": "审核参赛信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
-                { "title": "审核志愿信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
+                { "title": "审核专利信息", "icon": "fi-rr-trophy", "path": "/patentCheck" },
                 { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
                 { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" },
                 {"title":"用户管理","icon":"fi-rr-user", "path":"/userManagement"},
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
+                { "title": "竞赛管理", "icon": "fi-rr-settings", "path": "/competitionManage"}
             ]
     }
     loadComplete.value = false;

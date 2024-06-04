@@ -79,6 +79,28 @@ const router = createRouter({
                         },
 
                     ]
+                }, 
+                {
+                    path: "patentCheck",
+                    name: "patentCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "patentCheckHomeView",
+                            component: () => import("@/views/patent/PatentCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "patentCheck",
+                            component: () => import("@/views/patent/PatentCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
+                    path: "competitionManage",
+                    name: "competitionManage",
+                    component: () => import("@/views/competition/CompetitionManagementView.vue")
                 },
                 {
                     path: "paper",
@@ -96,8 +118,8 @@ const router = createRouter({
                     component: () => import("@/views/patent/showPatentpage.vue"),
                 },
                 {
-                    path: "patentdetile",
-                    name: "patentdetile",
+                    path: "patentDetail/:teamId",
+                    name: "patentDetail",
                     component: () => import("@/views/patent/PatentView.vue"),
                 },
                 {
@@ -111,8 +133,8 @@ const router = createRouter({
                     component: () => import("@/views/volunteer/showVolunteers.vue"),
                 },
                 {
-                    path: "volunteersdetile",
-                    name: "volunteersdetile",
+                    path: "volunteersDetail",
+                    name: "volunteersDetail",
                     component: () => import("@/views/volunteer/VolunteersView.vue"),
                 },
                 {
@@ -131,8 +153,8 @@ const router = createRouter({
                     component: () => import("@/views/social/showSocialWork.vue"),
                 },
                 {
-                    path: "socialdetile",
-                    name: "socialdetile",
+                    path: "socialDetail",
+                    name: "socialDetail",
                     component: () => import("@/views/social/SocialWork.vue"),
                 },
                 {
