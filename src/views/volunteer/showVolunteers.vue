@@ -27,7 +27,7 @@ import router from "@/router";
 const volunteers = ref([])
 
 const goToVolunteerForm = () => {
-  router.push('volunteersdetile')  // 这里的路径应该是填报志愿信息页面的路径
+  router.push('volunteersDetail')  // 这里的路径应该是填报志愿信息页面的路径
 }
 
 onBeforeMount(async () => {

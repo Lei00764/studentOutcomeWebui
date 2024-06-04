@@ -27,7 +27,7 @@ import router from "@/router";
 const socialActivities = ref([])
 
 const goToSocialActivityForm = () => {
-  router.push('socialdetile')  // 这里的路径应该是填报社会实践信息页面的路径
+  router.push('socialDetail')  // 这里的路径应该是填报社会实践信息页面的路径
 }
 
 onBeforeMount(async () => {
