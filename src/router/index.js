@@ -168,6 +168,18 @@ const router = createRouter({
                     component: () => import("@/views/social/ChangeSocialwork.vue"),
                 },
                 {
+                    path: "reviewSocialwork/:Id",
+                    name: "reviewSocialwork",
+                    component: () => import("@/views/social/reviewSocialwork.vue"),
+                 
+                },
+                {
+                    path: "SocialCheckListView",
+                    name: "SocialCheckListView",
+                    component: () => import("@/views/social/SocialCheckListView.vue"),
+                 
+                },
+                {
                     path: "ticket",
                     name: "ticket",
                     children: [

@@ -5,7 +5,6 @@ import { ref } from 'vue'
 import { ElTable } from 'element-plus'
 // 修改这一行，使用你的API获取志愿服务数据
 import api from '@/api/volunteer'
-import checkSessionUtil from "@/utils/checkSession"
 import router from "@/router";
 // 如果你没有学生选择面板，可以将这行注释掉
 import SelectStudentPanel from "@/components/SelectStudentPanel.vue";
