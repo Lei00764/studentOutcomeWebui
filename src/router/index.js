@@ -103,15 +103,22 @@ const router = createRouter({
                     component: () => import("@/views/competition/CompetitionManagementView.vue")
                 },
                 {
+                    name: "paperSeries",
                     path: "paper",
-                    name: "paperView",
-                    component: () => import("@/views/paper/PaperView.vue"),
+                    children: [
+                        {
+                            path: ":teamId",
+                            name: "paperView",
+                            component: () => import("@/views/paper/PaperView.vue"),
+                        },
+                        {
+                            path: "",
+                            name: "ChangePaperwork",
+                            component: () => import("@/views/paper/StudentPaperListView.vue"),
+                        },
+                    ]
                 },
-                {
-                    path: "ChangePaperwork",
-                    name: "ChangePaperwork",
-                    component: () => import("@/views/paper/ChangePaperwork.vue"),
-                },
+
                 {
                     path: "patent",
                     name: "patentView",
