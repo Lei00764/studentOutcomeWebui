@@ -123,11 +123,6 @@ const router = createRouter({
                     component: () => import("@/views/patent/PatentView.vue"),
                 },
                 {
-                    path: "ChangePatentwork",
-                    name: "ChangePatentwork",
-                    component: () => import("@/views/patent/ChangePatentwork.vue"),
-                },
-                {
                     path: "volunteers",
                     name: "volunteersView",
                     component: () => import("@/views/volunteer/showVolunteers.vue"),
@@ -153,7 +148,7 @@ const router = createRouter({
                     component: () => import("@/views/social/showSocialWork.vue"),
                 },
                 {
-                    path: "socialDetail",
+                    path: "socialDetail/:teamId",
                     name: "socialDetail",
                     component: () => import("@/views/social/SocialWork.vue"),
                 },
