@@ -1,9 +1,9 @@
 <script setup>
-import {useRoute} from "vue-router";
+import { useRoute } from "vue-router";
 import router from "@/router";
-import {computed, reactive, ref, watch} from "vue";
-import {ElMessage, ElMessageBox} from "element-plus";
-import api from "@/api/socialwork";
+import { computed, reactive, ref, watch } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import api from "@/api/socialWork";
 import CertificateUpload from "@/components/CertificateUpload.vue";
 
 let socialworkId = 0;
@@ -12,8 +12,9 @@ const route = useRoute()
 
 socialworkId = parseInt(route.params.id)
 watch(route, (old, newRoute) => {
-    if (route.params.id)
+    if (route.params.id) {
         socialworkId = parseInt(route.params.id)
+    }
     if (typeof (newRoute.params.id) !== "undefined")
         reloadPage();
 })
@@ -44,10 +45,10 @@ const queryForm = reactive({
 })
 
 const statusCodeList = {
-    0: {name: "草稿", tagType: "info"},
-    1: {name: "等待审核", tagType: "warning"},
-    2: {name: "审核通过", tagType: "success"},
-    3: {name: "审核不通过", tagType: "danger"}
+    0: { name: "草稿", tagType: "info" },
+    1: { name: "等待审核", tagType: "warning" },
+    2: { name: "审核通过", tagType: "success" },
+    3: { name: "审核不通过", tagType: "danger" }
 }
 
 
@@ -90,7 +91,7 @@ const onSaveButtonClicked = () => {
         //左边是api中获取的变量，右边是paper中自己设定的变量
         socialwork_abstract: queryForm.desc,
         submission_date: new Date(queryForm.awardDate).toISOString().split('T')[0],
-        attachments:  queryForm.attachment,
+        attachments: queryForm.attachment,
         socialwork_author: queryForm.socialworkAuthor,
         socialwork_title: queryForm.socialworkName,
         id: socialworkId,
@@ -100,7 +101,7 @@ const onSaveButtonClicked = () => {
     api.changeRecord(newSocialwork)
         .then(async res => {
             await uploadImg();
-            ElMessage.success("社会工作信息保存成功");
+            ElMessage.success("社会服务信息保存成功");
             reloadPage();
         })
         .catch(error => {
@@ -116,12 +117,12 @@ const uploadImg = async () => {
 }
 
 const onRevertButtonClicked = () => {
-    ElMessageBox.confirm("确认要撤销对本份参赛记录的更改？", "撤销更改",{
+    ElMessageBox.confirm("确认要撤销对本份参赛记录的更改？", "撤销更改", {
         type: 'warning'
-    }).then(()=>{
+    }).then(() => {
         reloadPage();
         certificateUpload.value.revertChange()
-    }).catch(()=>{})
+    }).catch(() => { })
 
 }
 
@@ -139,7 +140,7 @@ const onDenyButtonClicked = async () => {
 }
 
 const onGoBackButtonClicked = () => {
-    router.push("/socialworkCheck");
+    router.push("/SocialCheckListView");
 }
 
 const setInfoChanged = (_) => {
@@ -158,9 +159,9 @@ const onCertImgChanged = () => {
 
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">审核社会工作信息</h1>
+        <h1 class="pageTitle">审核社会服务信息</h1>
         <div class="helpText">
-            <p>帮助：您可以在本页面中审核与修改学生填报的社会工作信息。点击“审核通过”或“打回”将修改本份社会工作信息的状态并跳转到下一份参赛信息。</p>
+            <p>帮助：您可以在本页面中审核与修改学生填报的社会服务信息。点击“审核通过”或“打回”将修改本份社会服务信息的状态并跳转到下一份参赛信息。</p>
             <p>如果需要修改内容后再审核通过，请先点击“保存”，再点击“审核通过”。</p>
         </div>
 
@@ -171,12 +172,8 @@ const onCertImgChanged = () => {
         <el-row>
             <el-col :span="24">
                 <el-form-item label="评审意见">
-                    <el-input
-                        v-model="checkMessage"
-                        :autosize="{ minRows: 2, maxRows: 10 }"
-                        type="textarea"
-                        placeholder=""
-                    />
+                    <el-input v-model="checkMessage" :autosize="{ minRows: 2, maxRows: 10 }" type="textarea"
+                        placeholder="" />
                 </el-form-item>
             </el-col>
         </el-row>
@@ -195,49 +192,29 @@ const onCertImgChanged = () => {
         </el-row>
         <el-row>
             <el-col :span="6">
-                <el-form-item label="社会工作名称">
-                    <el-input
-                        v-model="queryForm.socialworkName"
-                        placeholder="请输入社会工作名称"
-                        @input="setInfoChanged"
-                    />
+                <el-form-item label="社会服务名称">
+                    <el-input v-model="queryForm.socialworkName" placeholder="请输入社会服务名称" @input="setInfoChanged" />
                 </el-form-item>
             </el-col>
             <el-col :span="2"></el-col>
             <el-col :span="6">
-                <el-form-item label="社会工作作者">
-                    <el-input
-                        v-model="queryForm.socialworkAuthor"
-                        placeholder="请输入社会工作作者"
-                        @input="setInfoChanged"
-                    />
+                <el-form-item label="社会服务人员">
+                    <el-input v-model="queryForm.socialworkAuthor" placeholder="请输入社会服务人员" @input="setInfoChanged" />
                 </el-form-item>
             </el-col>
             <el-col :span="2"></el-col>
             <el-col :span="6">
-                <el-form-item label="社会工作获得日期">
-                    <el-date-picker
-                        v-model="queryForm.awardDate"
-                        type="date"
-                        placeholder="请选择"
-                        @change="setInfoChanged"
-                    />
+                <el-form-item label="社会服务时长">
+                    <el-date-picker v-model="queryForm.awardDate" type="date" placeholder="请选择"
+                        @change="setInfoChanged" />
                 </el-form-item>
             </el-col>
         </el-row>
 
         <el-row>
             <el-col :span="6">
-                <el-form-item label="社会工作状态">
-                    <el-select v-model="queryForm.socialwork_situation" placeholder="请选择社会工作状态">
-                        <el-option v-for="state in socialworkStates" :label="state.state_name" :value="state.id" :key="state.id"></el-option>
-                    </el-select>
-                </el-form-item>
-            </el-col>
-            <el-col :span="2"></el-col>
-            <el-col :span="6">
                 <el-form-item label="审核状态">
-                    <el-tag :type="statusCodeList[statusCode].tagType">{{statusCodeList[statusCode].name}}</el-tag>
+                    <el-tag :type="statusCodeList[statusCode].tagType">{{ statusCodeList[statusCode].name }}</el-tag>
                 </el-form-item>
             </el-col>
         </el-row>
@@ -246,26 +223,16 @@ const onCertImgChanged = () => {
         <el-row>
             <el-col :span="24">
                 <el-form-item label="证明材料">
-                    <certificate-upload
-                        ref="certificateUpload"
-                        @image-changed="onCertImgChanged"
-                        v-model:cert-url="queryForm.attachment"
-                        record-type="socialwork"
-                        :record-id="socialworkId"
-                    />
+                    <certificate-upload ref="certificateUpload" @image-changed="onCertImgChanged"
+                        v-model:cert-url="queryForm.attachment" record-type="socialwork" :record-id="socialworkId" />
                 </el-form-item>
 
             </el-col>
         </el-row>
         <el-row>
             <el-col :span="24">
-                <el-form-item label="社会工作摘要">
-                    <el-input
-                        v-model="queryForm.desc"
-                        type="textarea"
-                        placeholder=""
-                        @input="setInfoChanged"
-                    />
+                <el-form-item label="社会服务摘要">
+                    <el-input v-model="queryForm.desc" type="textarea" placeholder="" @input="setInfoChanged" />
                 </el-form-item>
             </el-col>
         </el-row>
@@ -274,7 +241,8 @@ const onCertImgChanged = () => {
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in queryForm.operationLogs" :key="index" :timestamp="activity.operation_time">
+            <el-timeline-item v-for="(activity, index) in queryForm.operationLogs" :key="index"
+                :timestamp="activity.operation_time">
                 {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>
@@ -282,12 +250,12 @@ const onCertImgChanged = () => {
 </template>
 
 <style scoped>
-.viewWrapper{
+.viewWrapper {
     position: relative;
     width: 85%;
     margin: 0 auto;
     background-color: #fff;
-    box-shadow: 0 3px 3px rgba(36,37,38,.05);
+    box-shadow: 0 3px 3px rgba(36, 37, 38, .05);
     border-radius: 3px;
     padding: 20px;
 }
@@ -310,7 +278,7 @@ const onCertImgChanged = () => {
 
 .operationButtons {
     display: flex;
-    justify-content:center;
+    justify-content: center;
     margin: 20px 0;
 }
 </style>
