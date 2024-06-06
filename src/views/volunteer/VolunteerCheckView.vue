@@ -37,9 +37,14 @@ const queryForm = reactive({
     participateTime: "",
     durationHour: 0,
     desc: "",//description
-    attachment: "", 
-    applicant:"" //申请人
+    attachment: "",
 });
+
+/**
+ *
+ * @type {import("vue").Ref<SimpleStudent>}
+ */
+const student = ref({})
 
 const statusCodeList = {
     0: { name: "草稿", tagType: "info" },
@@ -48,35 +53,40 @@ const statusCodeList = {
     3: { name: "审核不通过", tagType: "danger" },
 };
 
-const reloadPage = () => {
+const reloadPage = async () => {
     console.log(volunteerId + "volunteerId");
-        api.viewApi.selectStuRecordById(volunteerId).then((res) => {
-            let volunteer = res.json.volunteer;
+    try{
+        let statesRes = await api.viewApi.getStates()
 
-            operationLogs.value = res.json.logs
+        volunteerStates.value = statesRes.json.states
 
-            queryForm.volunteerName = volunteer.vol_name;
-            queryForm.volunteerType = volunteer.vol_type;
-            queryForm.participateTime = volunteer.participate_time;
-            queryForm.durationHour = volunteer.duration_hour;
-            queryForm.desc = volunteer.vol_detail;
-            queryForm.applicant = volunteer.applicant;
-            queryForm.attachment = volunteer.image_id ? "/certImg/" + volunteer.image_id : null;
 
-            statusCode.value = volunteer.verify_status;
+        let res = await api.viewApi.selectStuRecordById(volunteerId)
+        let volunteer = res.json.volunteer;
+
+        operationLogs.value = res.json.logs
+
+        queryForm.volunteerName = volunteer.vol_name;
+        queryForm.volunteerType = volunteer.vol_type;
+        queryForm.participateTime = volunteer.participate_time;
+        queryForm.durationHour = volunteer.duration_hour;
+        queryForm.desc = volunteer.vol_detail;
+        queryForm.attachment = volunteer.image_id ? "/certImg/" + volunteer.image_id : null;
+
+        statusCode.value = volunteer.verify_status;
+        student.value = res.json.student
 
             isCertImageChanged.value = false;
-            certUrl.value = volunteer.image_id;
-        }).catch((error) => {
-            console.log("error:", error);
-            loading.value = false;
-            if (error.network) return;
-            error.defaultHandler();
-        });
-        isCertImageChanged.value = false;
-        infoNotChanged.value = true;
-    };
-;
+        certUrl.value = volunteer.image_id;
+    } catch (error) {
+        console.log("error:", error);
+        loading.value = false;
+        if (error.network) return;
+        error.defaultHandler();
+    }
+    isCertImageChanged.value = false;
+    infoNotChanged.value = true;
+};
 reloadPage();
 
 const onSaveButtonClicked = () => {
@@ -192,23 +202,12 @@ const onCertImgChanged = () => {
                 </el-form-item>
             </el-col>
             <el-col :span="2"></el-col>
-            <el-col :span="6">
-                <el-form-item label="申请人">
-                    <el-input
-                        v-model="queryForm.applicant"
-                        placeholder="请输入申请人"
-                        @input="setInfoChanged"
-                    />
-                </el-form-item>
-            </el-col>
-            <el-col :span="2"></el-col>
+
             <el-col :span="6">
                 <el-form-item label="志愿类型">
-                    <el-input
-                        v-model="queryForm.volunteerType"
-                        placeholder="请输入志愿活动类型"
-                        @input="setInfoChanged"
-                    />
+                    <el-select v-model="queryForm.volunteerType" placeholder="请选择">
+                        <el-option v-for="state in volunteerStates" :label="state.state_name" :value="state.id" :key="state.id"></el-option>
+                    </el-select>
                 </el-form-item>
             </el-col>
             <el-col :span="6">
@@ -264,6 +263,23 @@ const onCertImgChanged = () => {
                 </el-form-item>
             </el-col>
         </el-row>
+
+        <el-row>
+            <p class="sectionTitle">申请人</p>
+        </el-row>
+        <el-row>
+            <el-col :span="6">
+                <el-form-item label="学号">
+                    {{student.stu_id}}
+                </el-form-item>
+            </el-col>
+            <el-col :span="6">
+                <el-form-item label="姓名">
+                    {{student.stu_name}}
+                </el-form-item>
+            </el-col>
+        </el-row>
+
 
         <el-col>
             <p class="sectionTitle">操作日志</p>

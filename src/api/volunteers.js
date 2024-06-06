@@ -52,20 +52,6 @@ const checkApi = {
         })
     },
 
-    uploadImage: (volunteerId, imgBlob) => {
-        return request.post("/api/volunteer/uploadImage", {
-            vol_id: volunteerId,
-            image: imgBlob
-        }, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        })
-    },
-    clearCertImage: (volunteerId) => {
-        return request.post("/api/volunteer/clearCertImage", { patent_id: patentId })
-    },
- 
     /**
      * @typedef {Object} QueryField
      * @property {string} field 字段
@@ -166,7 +152,8 @@ const viewApi = {
      *
      * @return {Promise<ParsedResponse<{
      *     volunteer: Volunteer,
-     *     logs: VolunteerOperationLog[]
+     *     logs: VolunteerOperationLog[],
+     *     student: SimpleStudent
      * }>>}
      */
     selectStuRecordById: (vol_id) => {

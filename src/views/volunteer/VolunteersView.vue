@@ -176,7 +176,6 @@ export default {
         },
         async getRecord() {
             try {
-                // 将 value 转换为 JSON 格式的对象
                 let states = await api.viewApi.getStates()
                 this.states = states.json.states
 
