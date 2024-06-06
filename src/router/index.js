@@ -98,6 +98,40 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "paperCheck",
+                    name: "paperCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "paperCheckHomeView",
+                            component: () => import("@/views/paper/PaperCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "paperCheck",
+                            component: () => import("@/views/paper/PaperCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
+                    path: "volunteerCheck",
+                    name: "volunteerCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "volunteerCheckHomeView",
+                            component: () => import("@/views/volunteer/VolunteerCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "volunteerCheck",
+                            component: () => import("@/views/volunteer/VolunteerCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
                     path: "competitionManage",
                     name: "competitionManage",
                     component: () => import("@/views/competition/CompetitionManagementView.vue")
@@ -127,16 +161,24 @@ const router = createRouter({
                     name: "ChangePatentwork",
                     component: () => import("@/views/patent/ChangePatentwork.vue"),
                 },
+
                 {
-                    path: "volunteers",
-                    name: "volunteersView",
-                    component: () => import("@/views/volunteer/showVolunteers.vue"),
+                    path: "volunteer",
+                    name: "volunteerSeries",
+                    children: [
+                        {
+                            path: "",
+                            name: "volunteersView",
+                            component: () => import("@/views/volunteer/showVolunteers.vue"),
+                        },
+                        {
+                            path: ":teamId",
+                            name: "volunteersDetail",
+                            component: () => import("@/views/volunteer/VolunteersView.vue"),
+                        },
+                    ]
                 },
-                {
-                    path: "volunteersDetail",
-                    name: "volunteersDetail",
-                    component: () => import("@/views/volunteer/VolunteersView.vue"),
-                },
+
                 {
                     path: "socialWork",
                     name: "socialWork",

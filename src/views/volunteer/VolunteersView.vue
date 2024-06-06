@@ -1,34 +1,27 @@
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">志愿服务填报</h1>
+        <h1 class="pageTitle"> {{ volunteerId === -1? "新增": "修改" }}志愿服务记录</h1>
         <div class="helpText">
-            帮助：在本页面中，您可以填报志愿服务信息。
+            帮助：在本页面中，您可以填报志愿服务记录。
         </div>
-        <el-form :model="volunteers" label-width="120px" status-icon :rules="rules">
+        <el-form :model="volunteers" label-width="120px" status-icon >
 
             <el-form-item label="志愿服务名称" style="width: 500px" prop="name">
                 <el-input v-model="volunteers.VOL_name" />
             </el-form-item>
 
             <el-form-item label="日期选择器" prop="time">
-                <div class="demo-date-picker">
-                    <div class="block">
-                        <el-date-picker v-model="volunteers.participate_time" type="date" placeholder="请选择日期" />
-                    </div>
-                </div>
+                <el-date-picker v-model="volunteers.participate_time" type="date" placeholder="请选择日期" />
             </el-form-item>
 
             <el-form-item label="时长" class="duration-input" prop="duration">
-                <el-input v-model="volunteers.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
-                <el-input v-model="volunteers.duration_hour" placeholder="小时" clearable />
+                <el-input v-model="volunteers.duration_day" placeholder="天数" clearable />&nbsp 天 &nbsp
+                <el-input v-model="volunteers.duration_hour" placeholder="小时" clearable />&nbsp 小时
             </el-form-item>
 
             <el-form-item label="志愿服务类型" prop="volType">
                 <el-select v-model="volunteers.vol_type" placeholder="请选择">
-                    <el-option label="校级" value="校级"></el-option>
-                    <el-option label="市级" value="市级"></el-option>
-                    <el-option label="省级" value="省级"></el-option>
-                    <el-option label="国家级" value="国家级"></el-option>
+                    <el-option v-for="state in states" :label="state.state_name" :value="state.id" :key="state.id"></el-option>
                 </el-select>
             </el-form-item>
 
@@ -37,25 +30,21 @@
             </el-form-item>
 
             <el-form-item label="佐证材料" prop="evidence">
-                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
-                    :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag mutiple>
-                    <el-icon>
-                        <Plus />
-                    </el-icon>
-                    <div class="upload-evidence-text">
-                        Drop file here or <em>click to upload</em>
-                    </div>
-                </el-upload>
-
-                <el-dialog v-model="evidenceCheck.dialogVisible">
-                    <img w-full :src="evidenceCheck.dialogImageUrl" alt="Preview Image"
-                        style="max-width: 100%; max-height: 100%;" />
-                </el-dialog>
+                <certificate-upload
+                    ref="certificateUpload"
+                    @image-changed="onCertImgChanged"
+                    v-model:cert-url="volunteers.image_id"
+                    record-type="volunteer"
+                    :record-id="volunteerId"
+                />
             </el-form-item>
 
             <el-form-item>
-                <el-button type="primary" @click="onSubmit" plain class="submit-button-create">Create</el-button>
-                <el-button class="submit-button-cancle">Cancel</el-button>
+                <el-button v-if="verify_status!== 2 && verify_status!== 1" type="primary" @click="onSubmit" plain class="submit-button-create">保存</el-button>
+                <el-button type="primary" @click="onSubmitToReview" plain class="submit-button-create"
+                           v-if="volunteerId !== -1 && verify_status=== 0 || verify_status=== 3">提交审核</el-button>
+                <el-button type="primary" @click="onWithdrawReview" plain class="submit-button-create"
+                           v-if="volunteerId !== -1 && verify_status=== 2 || verify_status=== 1 ">撤回修改</el-button>
             </el-form-item>
 
 
@@ -64,8 +53,8 @@
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.time">
-                {{ activity.msg }}
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.operation_time">
+                {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>
     </div>
@@ -75,71 +64,109 @@
 <script>
 import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue';
 import api from '@/api/volunteers';
+import router from "@/router";
+import CertificateUpload from "@/components/CertificateUpload.vue";
+import {ElMessage} from "element-plus";
+import {nextTick} from "vue";
 export default {
+    components: {CertificateUpload},
 
     data() {
         return {
-            rules: {
-                name: [
-                    { required: true, message: '名字不能为空', trigger: 'blur' },
-                    // { max: 30, message: '名称最长不能超过30个字', trigger: 'blur' },
-                ],
-                time: [
-                    { required: true, message: '时间不能为空', trigger: 'blur' },
-                ],
-                duration: [
-                    { required: true, message: '时长不能为空', trigger: 'blur' },
-                ],
-            },
+            volunteerId: -1,
             volunteers: {
                 VOL_name: '',
                 participate_time: '',
-                duration_day: '',
-                duration_hour: '',
-                vol_type: '',
+                duration_day: 0,
+                duration_hour: 0,
+                vol_type: 1,
                 vol_detail: '',
+                image_id: null
             },
             operationLogs: [],
-            fileList: [],
-            evidenceCheck: {
-                dialogImageUrl: '',
-                dialogVisible: false,
-                disabled: false,
-            },
-            HistoryRecord: [],
+            verify_status: 0,
+            states: [],
+            certImgChanged: false
         };
     },
     methods: {
+        onCertImgChanged() {
+            this.certImgChanged = true;
+        },
+
+        onSubmitToReview() {
+            api.editApi.submitToReview(this.volunteerId).then(res => {
+                ElMessage.success("成功提交审核")
+                this.verify_status = 1;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
+        },
+
+        onWithdrawReview() {
+            api.editApi.withdrawReview(this.volunteerId).then(res => {
+                ElMessage.success("成功撤回审核申请")
+                this.verify_status = 0;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
+        },
+
         onSubmit() {
             console.log('submit!');
-            console.log(this.evidenceCheck.dialogImageUrl);
 
-            api.submitCreate({
+            /**
+             * @type Volunteer
+             */
+            let newVolunteer = {
+                //左边是api中获取的变量，右边是paper中自己设定的变量
+                id: this.volunteerId,
                 vol_name: this.volunteers.VOL_name,
-                participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
-                duration_day: this.parseToInt(this.volunteers.duration_day),
-                duration_hour: this.parseToInt(this.volunteers.duration_hour),
-                evidence: this.evidenceCheck.dialogImageUrl,
                 vol_type: this.volunteers.vol_type,
-                vol_detail: this.volunteers.vol_detail, // 新添加的字段
-            })
-                .then((res) => {
-                    console.log(res.status);
-                    location.reload();
+                participate_time: new Date(this.volunteers.participate_time).toISOString().split('T')[0],
+                duration_hour: this.volunteers.duration_hour,
+                duration_day: this.volunteers.duration_day,
+
+                vol_detail: this.volunteers.vol_detail,
+                image_id:  "", // 服务器在更新时会忽略本字段，需要从uploadImg接口进行更新
+                verify_status: -1
+            }
+
+            if(this.volunteerId === -1) {
+                api.editApi.submitCreate(newVolunteer)
+                    .then((res) => {
+                        this.volunteerId = res.json.newVolunteerId;
+                        ElMessage.success("成功创建志愿服务记录");
+                        nextTick(async () => {
+                            if(this.certImgChanged) {
+                                await this.$refs.certificateUpload.uploadImg()
+                            }
+
+                            await router.push("/volunteer/" + res.json.newVolunteerId)
+                        })
+
+                    }).catch(error => {
+                    if(error.network) return;
+                    error.defaultHandler()
                 })
-                .catch((error) => {
-                    console.error('Error enrolling in training:', error);
-                });
+            } else {
+                api.editApi.changeRecord(newVolunteer)
+                    .then((res) => {
+                        ElMessage.success("成功保存志愿服务记录")
+                    }).then(() => {
+                    if(this.certImgChanged) {
+                        return this.$refs.certificateUpload.uploadImg()
+                    }
+                })
+                    .catch(error => {
+                        if(error.network) return;
+                        error.defaultHandler()
+                    })
+            }
         },
 
-
-        handleRemove(uploadFile, uploadFiles) {
-            console.log(uploadFile, uploadFiles);
-        },
-        handlePictureCardPreview(uploadFile) {
-            this.evidenceCheck.dialogImageUrl = uploadFile.url;
-            this.evidenceCheck.dialogVisible = true;
-        },
         parseToInt(value) {
             const parsedValue = parseInt(value, 10);
             if (isNaN(parsedValue)) {
@@ -147,55 +174,41 @@ export default {
             }
             return parsedValue;
         },
-        async getHistoryRecord() {
+        async getRecord() {
             try {
-                // 将 value 转换为 JSON 格式的对象
-                const res = await api.getRecord();
-                console.log(res.data); // 假设状态码在 'code' 属性中
-                console.log('success');
-                this.HistoryRecord = res.data.data.volunteerInfo.map((record) => ({
-                    participateTime: record.participate_time,
-                    durationDay: record.duration_day,
-                    durationHour: record.duration_hour,
-                    evidence: record.vol_detail, // 假设 'evidence' 对应 'vol_detail'
-                    auditStatus: record.verify_status ? 'verified' : 'unverified',
-                    volName: record.vol_name,
-                    volDetails: record.vol_detail, // 修复拼写错误 'vol_detiles' 为 'vol_detail'
-                    volId: record.id,
-                    volType: record.vol_type, // 添加 vol_type
-                }));
-                // console.log(this.HistoryRecord);
-            } catch (err) {
-                console.log('fail');
-                console.log(err);
+                let states = await api.viewApi.getStates()
+                this.states = states.json.states
+
+                if(router.currentRoute.value.params?.teamId === "new") {
+                    this.volunteerId = -1
+                } else {
+                    this.volunteerId = parseInt(router.currentRoute.value.params.teamId)
+
+                    const res = await api.viewApi.selectStuRecordById(this.volunteerId);
+                    let remoteVolunteer = res.json.volunteer
+                    this.verify_status = remoteVolunteer.verify_status
+                    this.volunteers.VOL_name = remoteVolunteer.vol_name
+                    this.volunteers.participate_time = remoteVolunteer.participate_time
+                    this.volunteers.duration_day = remoteVolunteer.duration_day
+                    this.volunteers.duration_hour = remoteVolunteer.duration_hour
+                    this.volunteers.vol_type = remoteVolunteer.vol_type
+                    this.volunteers.vol_detail = remoteVolunteer.vol_detail
+                    this.volunteers.image_id = remoteVolunteer.image_id ? "/certImg/" + remoteVolunteer.image_id : null;
+                    this.verify_status = remoteVolunteer.verify_status
+
+                    this.operationLogs = res.json.logs
+
+                }
+
+            } catch (error) {
+                if(error.network) return;
+                error.defaultHandler()
             }
-        },
-
-        editRecord(volId) {
-            console.log(volId);
-            this.$router.push({ name: 'changeVolunteers', params: { id: volId } });
-        },
-
-        deleteRecord(nowvol_id) {
-            console.log(nowvol_id);
-            console.log('delete record');
-            const vol_id = this.parseToInt(nowvol_id);
-
-            // 注意这里使用的是箭头函数
-            const res = api.deleteRecord({ vol_id: vol_id });
-            res.then(() => {
-                console.log("成功了");
-            }).catch(() => {
-                console.log("错误了");
-            });
-
-            // 由于是异步操作，下面这行代码会在 Promise 完成之前执行
-            console.log(res);
         },
 
     },
     mounted() {
-        this.getHistoryRecord();
+        this.getRecord();
     },
 };
 </script>
@@ -276,12 +289,12 @@ export default {
     height: 30px;
 }
 
-.submit-button-cancle {
+.submit-button-cancel {
     width: 120px;
     height: 30px;
 }
 
-.submit-button-cancle:hover {
+.submit-button-cancel:hover {
     /* width: 120px;
     height: 30px; */
     background-color: red;

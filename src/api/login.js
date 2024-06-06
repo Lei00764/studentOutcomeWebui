@@ -1,6 +1,14 @@
 import request from "@/utils/request"
 import axios from "axios";
 
+/**
+ * @typedef {Object} SimpleStudent
+ * @property {number} user_id
+ * @property {string} stu_id
+ * @property {string} stu_name
+ * @property {string} grade
+ */
+
 const login = (username, password) => {
     return request.post("/api/studentInfo/login", {
         username: username,
