@@ -10,7 +10,7 @@ let socialworkId = 0;
 
 const route = useRoute()
 
-socialworkId = parseInt(route.params.id)
+socialworkId = parseInt(route.params.Id)
 watch(route, (old, newRoute) => {
     if (route.params.id) {
         socialworkId = parseInt(route.params.id)
@@ -54,10 +54,10 @@ const statusCodeList = {
 
 const reloadPage = () => {
     console.log(socialworkId + "socialworkId")
-    api.getStates().then(res => {
+    api.getTypes().then(res => {
         socialworkStates.value = res.json.states
     }).then(() => {
-        api.selectStuRecordById(socialworkId).then(res => {
+        api.getRecordById(socialworkId).then(res => {
             let socialwork = res.json.socialwork
 
             socialworks.value = [socialwork]
@@ -89,14 +89,10 @@ reloadPage()
 const onSaveButtonClicked = () => {
     let newSocialwork = {
         //左边是api中获取的变量，右边是paper中自己设定的变量
-        socialwork_abstract: queryForm.desc,
-        submission_date: new Date(queryForm.awardDate).toISOString().split('T')[0],
-        attachments: queryForm.attachment,
-        socialwork_author: queryForm.socialworkAuthor,
-        socialwork_title: queryForm.socialworkName,
-        id: socialworkId,
-        socialwork_situation: queryForm.socialwork_situation,
-        verify_status: -1
+        social_detail: queryForm.desc,
+        participate_time: queryForm.awardDate,
+        social_name: queryForm.socialworkName,
+        social_id: socialworkId,
     }
     api.changeRecord(newSocialwork)
         .then(async res => {
@@ -106,7 +102,6 @@ const onSaveButtonClicked = () => {
         })
         .catch(error => {
             if (error.network) return;
-
             error.defaultHandler();
         });
 };
@@ -144,7 +139,9 @@ const onGoBackButtonClicked = () => {
 }
 
 const setInfoChanged = (_) => {
+    console.log('had change',infoNotChanged.value)
     infoNotChanged.value = false;
+    console.log('isAnythingChanged',isAnythingChanged.value )
 }
 
 const isAnythingChanged = computed(() => {
@@ -205,8 +202,7 @@ const onCertImgChanged = () => {
             <el-col :span="2"></el-col>
             <el-col :span="6">
                 <el-form-item label="社会服务时长">
-                    <el-date-picker v-model="queryForm.awardDate" type="date" placeholder="请选择"
-                        @change="setInfoChanged" />
+                    <el-input v-model="queryForm.awardDate" placeholder="请输入社会服务时长" @input="setInfoChanged" />
                 </el-form-item>
             </el-col>
         </el-row>

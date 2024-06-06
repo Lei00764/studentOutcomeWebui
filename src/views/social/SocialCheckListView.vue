@@ -130,7 +130,7 @@ const getSocialwork = () => {
                 fields.push(sf.sf)
         }
 
-        api.checkApi.getSocialworkWithKeyword(
+        api.checkApi.getsocialWithKeyword(
             fields,
             currentPage.value
         ).then(res => {
