@@ -98,6 +98,23 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "paperCheck",
+                    name: "paperCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "paperCheckHomeView",
+                            component: () => import("@/views/paper/PaperCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "paperCheck",
+                            component: () => import("@/views/paper/PaperCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
                     path: "volunteerCheck",
                     name: "volunteerCheckView",
                     children: [
