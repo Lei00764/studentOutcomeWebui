@@ -98,6 +98,23 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "volunteerCheck",
+                    name: "volunteerCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "volunteerCheckHomeView",
+                            component: () => import("@/views/volunteer/VolunteerCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "volunteerCheck",
+                            component: () => import("@/views/volunteer/VolunteerCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
                     path: "competitionManage",
                     name: "competitionManage",
                     component: () => import("@/views/competition/CompetitionManagementView.vue")
