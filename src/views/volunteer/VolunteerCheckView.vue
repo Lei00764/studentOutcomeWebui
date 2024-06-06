@@ -18,8 +18,6 @@ watch(route, (old, newRoute) => {
         reloadPage();
 });
 
-const volunteers = ref([]);
-
 const volunteerStates = ref([]);
 
 const loading = ref(false);
@@ -35,9 +33,9 @@ const infoNotChanged = ref(true);
 
 const queryForm = reactive({
     volunteerName: "",
-    volunteerType: "",
+    volunteerType: 1,
     participateTime: "",
-    durationHour: null,
+    durationHour: 0,
     desc: "",//description
     attachment: "", 
     applicant:"" //申请人
@@ -52,10 +50,11 @@ const statusCodeList = {
 
 const reloadPage = () => {
     console.log(volunteerId + "volunteerId");
-        api.selectStuRecordById(volunteerId).then((res) => {
-            let volunteer = res.json;
+        api.viewApi.selectStuRecordById(volunteerId).then((res) => {
+            let volunteer = res.json.volunteer;
 
-            volunteers.value = [volunteer];
+            operationLogs.value = res.json.logs
+
             queryForm.volunteerName = volunteer.vol_name;
             queryForm.volunteerType = volunteer.vol_type;
             queryForm.participateTime = volunteer.participate_time;
@@ -270,7 +269,7 @@ const onCertImgChanged = () => {
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in queryForm.operationLogs" :key="index" :timestamp="activity.operation_time">
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.operation_time">
                 {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>

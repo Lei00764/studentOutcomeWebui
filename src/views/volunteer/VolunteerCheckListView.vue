@@ -57,7 +57,6 @@ const statusCode = {
     3: { name: "审核不通过", tagType: "danger" }
 }
 
-let volunteerStates = {}
 /**
  * @typedef FieldSelection 一个字段的所有可选关键词
  * @property {string} name 关键词显示名
@@ -83,16 +82,17 @@ let volunteerStates = {}
  */
 const searchableFields = [
     { field: "id", name: "ID", canApproximate: false },
-    // { field: "volunteer_title", name: "志愿者名称", canApproximate: true },
+    { field: "vol_name", name: "志愿活动名称", canApproximate: true },
     {
-        field: "verify_status", name: "状态", canApproximate: false,
+        field: "verify_status", name: "审核状态", canApproximate: false,
         selections: [
             { name: "草稿", value: 0 },
             { name: "等待审核", value: 1 },
             { name: "审核通过", value: 2 },
             { name: "审核不通过", value: 3 },
         ]
-    }
+    },
+    { field: "vol_type", name: "类型", canApproximate: false, selections: [] }
 ]
 
 /**
@@ -102,6 +102,8 @@ const selectedFields = ref([])
 
 const selectedStudent = ref({})
 
+const volunteerStates = new Map()
+
 const getVolunteer = () => {
     if (studentQuery.value) {
         let userId = selectedStudent.value.user_id;
@@ -109,6 +111,9 @@ const getVolunteer = () => {
             userId,
             currentPage.value
         ).then(res => {
+            for(let record of res.json.content) {
+                record.stu_name = selectedStudent.value.stu_name
+            }
             content.v = res.json.content
             total.value = res.json.count
             if (firstFetch) {
@@ -152,7 +157,7 @@ const onClear = () => {
 
 const goStartCheck = (row) => {
     checkSessionUtil.getCheckSessionId(true);
-    router.push("/VolunteerCheck/" + row.vol_id)
+    router.push("/VolunteerCheck/" + row.id)
 }
 
 /**
@@ -214,15 +219,31 @@ const selectStudent = () => {
     })
 }
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
     // 预先设置好选择“等待审核”状态
     selectedFields.value.push({
         f: searchableFields[2],
         sf: { field: 'verify_status', keyword: 1 }
     })
+    // 加载志愿服务类型
+    const response2 = await api.viewApi.getStates()
+    volunteerStates.clear()
+    for(let state of response2.json.states) {
+        volunteerStates.set(state.id, state.state_name)
+        searchableFields[3].selections.push({name: state.state_name, value: state.id})
+    }
+
     getVolunteer()
 
 })
+
+const toYYYYmmDD = (dateStr) => {
+    let date = new Date(dateStr)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
 </script>
 
@@ -296,12 +317,21 @@ onBeforeMount(() => {
         </div>
 
         <el-table ref="multipleTableRef" :data="content.v" style="width: 100%" @selection-change="handleSelectionChange">
-            <el-table-column property="vol_id" label="ID" />
-            <el-table-column property="applicant" label="申请学生" />
+            <el-table-column property="id" label="ID" />
+            <el-table-column property="stu_name" label="申请学生" />
             <el-table-column property="vol_name" label="志愿活动名称"></el-table-column>
-            <el-table-column property="vol_type" label="志愿类型" />
-            <el-table-column property="participate_time" label="志愿日期" />
-            <el-table-column property="duration_hour" label="志愿时长/h" />
+            <el-table-column property="vol_type" label="志愿类型" >
+                <template #default="scope">
+                    {{ volunteerStates.get(scope.row.vol_type) }}
+                </template>
+            </el-table-column>
+            <el-table-column property="participate_time" label="志愿日期" >
+                <template #default="scope">
+                    {{ toYYYYmmDD(scope.row.participate_time) }}
+                </template>
+            </el-table-column>
+            <el-table-column property="duration_day" label="志愿时长/天" />
+            <el-table-column property="duration_hour" label="志愿时长/小时" />
             <el-table-column label="审核状态">
                 <template #default="scope">
                     <el-tag :type="statusCode[scope.row.verify_status].tagType">

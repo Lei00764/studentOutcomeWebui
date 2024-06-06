@@ -65,7 +65,7 @@ loginApi.getUserInfo().then(response => {
     let responseObj = response.json
     isLogin.value = true;
     gotUserInfo.value = true
-    responseObj.group_id = 3
+    // responseObj.group_id = 3
     switch (responseObj.group_id) {
         case 2:
             menus.v = [
@@ -73,7 +73,7 @@ loginApi.getUserInfo().then(response => {
                 { "title": "竞赛填报", "icon": "fi-rr-trophy", "path": "/competition" },
                 { "title": "论文填报", "icon": "fi-rr-file", "path": "/paper" },
                 { "title": "专利填报", "icon": "fi-rr-bulb", "path": "/patent" },
-                { "title": "志愿服务", "icon": "fi-rr-room-service", "path": "/volunteers" },
+                { "title": "志愿服务", "icon": "fi-rr-room-service", "path": "/volunteer" },
                 { "title": "社会活动", "icon": "fi-rr-users", "path": "/socialWork" },
                 { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
