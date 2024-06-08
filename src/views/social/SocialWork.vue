@@ -1,61 +1,53 @@
 <template>
     <div class="viewWrapper">
-        <h1 class="pageTitle">社会服务填报</h1>
+        <h1 class="pageTitle">{{ societyId === -1 ? "填报" : "修改" }}社会服务记录</h1>
         <div class="helpText">
             帮助：在本页面中，您可以填报社会服务信息。
         </div>
-        <el-form :model="socialwork" label-width="120px" status-icon :rules="rules">
+        <el-form :model="socialWork" label-width="120px" status-icon>
 
             <el-form-item label="社会服务名称" style="width: 500px" prop="name">
-                <el-input v-model="socialwork.social_name" />
+                <el-input v-model="socialWork.social_name" />
             </el-form-item>
 
             <el-form-item label="日期选择器" prop="time">
-                <div class="demo-date-picker">
-                    <div class="block">
-                        <el-date-picker v-model="socialwork.participate_time" type="date" placeholder="请选择日期" />
-                    </div>
-                </div>
+
+                <el-date-picker v-model="socialWork.participate_time" type="date" placeholder="请选择日期" />
+
             </el-form-item>
 
             <el-form-item label="时长" class="duration-input" prop="duration">
-                <el-input v-model="socialwork.duration_day" placeholder="天数" style="margin-right: 50px;" clearable />
-                <el-input v-model="socialwork.duration_hour" placeholder="小时" clearable />
+                <el-input v-model="socialWork.duration_day" placeholder="天数"  clearable style="margin-right: 10px;"/> 天
+                <el-input v-model="socialWork.duration_hour" placeholder="小时" clearable style="margin-right: 10px;margin-left: 10px"/>小时
             </el-form-item>
 
             <el-form-item label="社会服务类型" prop="socialType">
-                <el-select v-model="socialwork.social_type" placeholder="请选择">
-                    <el-option label="校级" value="校级"></el-option>
-                    <el-option label="市级" value="市级"></el-option>
-                    <el-option label="省级" value="省级"></el-option>
-                    <el-option label="国家级" value="国家级"></el-option>
+                <el-select v-model="socialWork.social_type" placeholder="请选择社会服务类型">
+                    <el-option v-for="type in societyTypes" :label="type.type_name" :value="type.id" :key="type.id"></el-option>
                 </el-select>
             </el-form-item>
 
             <el-form-item label="详细描述" prop="socialDetails">
-                <el-input v-model="socialwork.social_detail" type="textarea" :rows="4" placeholder="请输入详细描述"></el-input>
+                <el-input v-model="socialWork.social_detail" type="textarea" :rows="4" placeholder="请输入详细描述"></el-input>
             </el-form-item>
 
             <el-form-item label="佐证材料" prop="evidence">
-                <el-upload v-model:file-list="fileList" action="#" list-type="picture-card"
-                    :on-preview="handlePictureCardPreview" :on-remove="handleRemove" drag mutiple>
-                    <el-icon>
-                        <Plus />
-                    </el-icon>
-                    <div class="upload-evidence-text">
-                        Drop file here or <em>click to upload</em>
-                    </div>
-                </el-upload>
-
-                <el-dialog v-model="evidenceCheck.dialogVisible">
-                    <img w-full :src="evidenceCheck.dialogImageUrl" alt="Preview Image"
-                        style="max-width: 100%; max-height: 100%;" />
-                </el-dialog>
+                <certificate-upload
+                    ref="certificateUpload"
+                    @image-changed="onCertImgChanged"
+                    v-model:cert-url="socialWork.evidence"
+                    record-type="society"
+                    :record-id="societyId"
+                />
             </el-form-item>
 
             <el-form-item>
-                <el-button type="primary" @click="onSubmit" plain class="submit-button-create">Create</el-button>
-                <el-button class="submit-button-cancle">Cancel</el-button>
+                <el-button type="primary" @click="onSubmit" plain class="submit-button-create">{{ societyId === -1 ? "创建" : "保存" }}</el-button>
+                <el-button type="primary" @click="onSubmitToReview" plain class="submit-button-create"
+                           v-if="societyId !== -1 && verify_status=== 0 || verify_status=== 3">提交审核</el-button>
+                <el-button type="primary" @click="onWithdrawReview" plain class="submit-button-create"
+                           v-if="societyId !== -1 && verify_status=== 2 || verify_status=== 1 ">撤回修改</el-button>
+                <el-button class="submit-button-cancel" @click="onCancel">返回</el-button>
             </el-form-item>
 
 
@@ -66,8 +58,8 @@
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.time">
-                {{ activity.msg }}
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.operation_time">
+                {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>
     </div>
@@ -75,74 +67,128 @@
 
 
 <script>
-import { Delete, Download, Plus, ZoomIn } from '@element-plus/icons-vue';
 import api from '@/api/socialWork';
+import router from "@/router";
+import CertificateUpload from "@/components/CertificateUpload.vue";
+import {ElMessage} from "element-plus";
+import {nextTick} from "vue";
 export default {
+    components: {CertificateUpload},
 
     data() {
         return {
-            rules: {
-                name: [
-                    { required: true, message: '名字不能为空', trigger: 'blur' },
-                    // { max: 30, message: '名称最长不能超过30个字', trigger: 'blur' },
-                ],
-                time: [
-                    { required: true, message: '时间不能为空', trigger: 'blur' },
-                ],
-                duration: [
-                    { required: true, message: '时长不能为空', trigger: 'blur' },
-                ],
-            },
-            socialwork: {
+            societyId: -1,
+            verify_status: 0,
+            socialWork: {
                 social_name: '',
                 participate_time: '',
                 duration_day: '',
                 duration_hour: '',
-                social_type: '',      // 补充
-                social_detail: '',    // 补充
+                social_type: 1,
+                social_detail: '',
+                evidence: ''
             },
             operationLogs: [],
-            fileList: [],
+            societyTypes: [],
             evidenceCheck: {
                 dialogImageUrl: '',
                 dialogVisible: false,
                 disabled: false,
             },
-            HistoryRecord: [],
+            certImgChanged: false,
         };
     },
     methods: {
+        onCancel() {
+            router.push("/socialWork")
+        },
+
         onSubmit() {
             console.log('submit!');
-            console.log(this.evidenceCheck.dialogImageUrl);
 
-            api.submitCreate({
-                social_name: this.socialwork.social_name,
-                participate_time: new Date(this.socialwork.participate_time).toISOString().split('T')[0],
-                duration_day: this.parseToInt(this.socialwork.duration_day),
-                duration_hour: this.parseToInt(this.socialwork.duration_hour),
-                evidence: this.evidenceCheck.dialogImageUrl,
-                social_type: this.socialwork.social_type,
-                social_detail: this.socialwork.social_detail, // 新添加的字段
-            })
-                .then((res) => {
-                    console.log(res.status);
+            /**
+             *
+             * @type Society
+             */
+            let newSociety = {
+                id: this.societyId,
+                society_name: this.socialWork.social_name,
+                participate_time: new Date(this.socialWork.participate_time).toISOString().split('T')[0],
+                society_type: this.socialWork.social_type,
+                duration_day: this.parseToInt(this.socialWork.duration_day),
+                duration_hour: this.parseToInt(this.socialWork.duration_hour),
+
+                verify_status: -1,
+                society_detail: this.socialWork.social_detail, // 新添加的字段
+                evidence: '',
+
+            }
+
+            if(this.societyId === -1) {
+                api.editApi.submitCreate(newSociety)
+                    .then((res) => {
+                        this.societyId = res.json.newSocietyId;
+                        ElMessage.success("成功创建社会服务信息");
+                        nextTick(async () => {
+                            if(this.certImgChanged) {
+                                setTimeout(async ()=> {
+                                    await this.$refs.certificateUpload.uploadImg()
+                                    await router.push("/socialDetail/" + res.json.newSocietyId)
+                                    location.reload()
+                                }, 500)
+
+                            } else {
+                                await router.push("/socialDetail/" + res.json.newSocietyId)
+                                location.reload()
+                            }
+
+
+                        })
+
+                    }).catch(error => {
+                    if(error.network) return;
+                    error.defaultHandler()
                 })
-                .catch((error) => {
-                    console.error('Error enrolling in training:', error);
-                });
+            } else {
+                api.editApi.changeRecord(newSociety)
+                    .then((res) => {
+                        ElMessage.success("成功保存社会服务信息")
+                    }).then(() => {
+                    if(this.certImgChanged) {
+                        return this.$refs.certificateUpload.uploadImg()
+                    }
+                    location.reload()
+                })
+                    .catch(error => {
+                        if(error.network) return;
+                        error.defaultHandler()
+                    })
+            }
+        },
 
-            location.reload();
+        onSubmitToReview() {
+            api.editApi.submitToReview(this.societyId).then(res => {
+                ElMessage.success("成功提交审核")
+                this.verify_status = 1;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
+        },
+
+        onWithdrawReview() {
+            api.editApi.withdrawReview(this.societyId).then(res => {
+                ElMessage.success("成功撤回审核申请")
+                this.verify_status = 0;
+            }).catch(error => {
+                if(error.network) return;
+                error.defaultHandler()
+            })
         },
 
 
-
-        handleRemove(uploadFile, uploadFiles) {
-            console.log(uploadFile, uploadFiles);
-        },
-        handlePictureCardPreview(uploadFile) {
-            this.evidenceCheck.dialogImageUrl = uploadFile.url;
-            this.evidenceCheck.dialogVisible = true;
+        onCertImgChanged() {
+            this.certImgChanged = true;
         },
         parseToInt(value) {
             const parsedValue = parseInt(value, 10);
@@ -151,55 +197,39 @@ export default {
             }
             return parsedValue;
         },
-        async getHistoryRecord() {
+        async getRecord() {
             try {
-                // 将 value 转换为 JSON 格式的对象
-                const res = await api.getRecord();
-                console.log(res.data); 
-                console.log('success');
-                this.HistoryRecord = res.data.data.map((record) => ({
-                    participateTime: record.participate_time,
-                    durationDay: record.duration_day,
-                    durationHour: record.duration_hour,
-                    evidence: record.social_detail, // 假设 'evidence' 对应 'social_detail'
-                    auditStatus: record.verify_status ? 'verified' : 'unverified',
-                    socialName: record.social_name,
-                    socialDetails: record.social_detail, // 修复拼写错误 'social_detiles' 为 'social_detail'
-                    socialId: record.social_id,
-                    socialType: record.social_type, // 添加 social_type
-                }));
-                // console.log(this.HistoryRecord);
-            } catch (err) {
-                console.log('fail');
-                console.log(err);
+                this.societyTypes = (await api.viewApi.getTypes()).json.types
+
+                if(router.currentRoute.value.params?.teamId === "new") {
+                    this.societyId = -1
+                } else {
+                    this.societyId = parseInt(router.currentRoute.value.params.teamId)
+
+                    let res = await api.viewApi.getRecordById(this.societyId)
+                    let remoteSociety = res.json.society
+                    this.socialWork.duration_day = remoteSociety.duration_day
+                    this.socialWork.social_detail = remoteSociety.society_detail
+                    this.socialWork.social_name = remoteSociety.society_name
+                    this.socialWork.participate_time = remoteSociety.participate_time
+                    this.socialWork.duration_hour = remoteSociety.duration_hour
+                    this.socialWork.social_type = remoteSociety.society_type
+                    this.socialWork.evidence =  remoteSociety.evidence ? "/certImg/" + remoteSociety.evidence : null;
+
+                    this.operationLogs = res.json.logs
+                    this.verify_status = remoteSociety.verify_status
+                }
+
+            } catch (error) {
+                if(error.network) return;
+                error.defaultHandler()
             }
-        },
 
-        editRecord(socialId) {
-            console.log(socialId);
-            this.$router.push({ name: 'changeSocialworks', params: { id: socialId } });
-        },
-
-        deleteRecord(nowsocial_id) {
-            console.log(nowsocial_id);
-            console.log('delete record');
-            const social_id = this.parseToInt(nowsocial_id);
-
-            // 注意这里使用的是箭头函数
-            const res = api.deleteRecord({ social_id: social_id });
-            res.then(() => {
-                console.log("成功了");
-            }).catch(() => {
-                console.log("错误了");
-            });
-
-            // 由于是异步操作，下面这行代码会在 Promise 完成之前执行
-            console.log(res);
         },
 
     },
     mounted() {
-        this.getHistoryRecord();
+        this.getRecord();
     },
 };
 </script>
@@ -280,15 +310,15 @@ export default {
     height: 30px;
 }
 
-.submit-button-cancle {
+.submit-button-cancel {
     width: 120px;
     height: 30px;
 }
 
-.submit-button-cancle:hover {
+.submit-button-cancel:hover {
     /* width: 120px;
     height: 30px; */
-    background-color: red;
+    background-color: var(--el-color-danger);
     color: white;
 }
 

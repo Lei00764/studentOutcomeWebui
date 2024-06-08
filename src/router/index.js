@@ -98,20 +98,77 @@ const router = createRouter({
                     ]
                 },
                 {
+                    path: "paperCheck",
+                    name: "paperCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "paperCheckHomeView",
+                            component: () => import("@/views/paper/PaperCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "paperCheck",
+                            component: () => import("@/views/paper/PaperCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
+                    path: "volunteer",
+                    name: "volunteerSeries",
+                    children: [
+                        {
+                            path: "",
+                            name: "volunteersView",
+                            component: () => import("@/views/volunteer/showVolunteers.vue"),
+                        },
+                        {
+                            path: ":teamId",
+                            name: "volunteersDetail",
+                            component: () => import("@/views/volunteer/VolunteersView.vue"),
+                        }
+                    ]
+                },
+                {
+                    path: "volunteerCheck",
+                    name: "volunteerCheckView",
+                    children: [
+                        {
+                            path: "",
+                            name: "volunteerCheckHomeView",
+                            component: () => import("@/views/volunteer/VolunteerCheckListView.vue"),
+                        },
+                        {
+                            path: ":id",
+                            name: "volunteerCheck",
+                            component: () => import("@/views/volunteer/VolunteerCheckView.vue")
+                        },
+
+                    ]
+                },
+                {
                     path: "competitionManage",
                     name: "competitionManage",
                     component: () => import("@/views/competition/CompetitionManagementView.vue")
                 },
                 {
+                    name: "paperSeries",
                     path: "paper",
-                    name: "paperView",
-                    component: () => import("@/views/paper/PaperView.vue"),
+                    children: [
+                        {
+                            path: ":teamId",
+                            name: "paperView",
+                            component: () => import("@/views/paper/PaperView.vue"),
+                        },
+                        {
+                            path: "",
+                            name: "ChangePaperwork",
+                            component: () => import("@/views/paper/StudentPaperListView.vue"),
+                        },
+                    ]
                 },
-                {
-                    path: "ChangePaperwork",
-                    name: "ChangePaperwork",
-                    component: () => import("@/views/paper/ChangePaperwork.vue"),
-                },
+
                 {
                     path: "patent",
                     name: "patentView",
@@ -122,40 +179,28 @@ const router = createRouter({
                     name: "patentDetail",
                     component: () => import("@/views/patent/PatentView.vue"),
                 },
-                {
-                    path: "ChangePatentwork",
-                    name: "ChangePatentwork",
-                    component: () => import("@/views/patent/ChangePatentwork.vue"),
-                },
-                {
-                    path: "volunteers",
-                    name: "volunteersView",
-                    component: () => import("@/views/volunteer/showVolunteers.vue"),
-                },
-                {
-                    path: "volunteersDetail",
-                    name: "volunteersDetail",
-                    component: () => import("@/views/volunteer/VolunteersView.vue"),
-                },
+
                 {
                     path: "socialWork",
                     name: "socialWork",
                     component: () => import("@/views/social/showSocialWork.vue"),
                 },
                 {
-                    path: "socialDetail",
+                    path: "socialDetail/:teamId",
                     name: "socialDetail",
                     component: () => import("@/views/social/SocialWork.vue"),
                 },
                 {
-                    path: "changeVolunteers",
-                    name: "changeVolunteers",
-                    component: () => import("@/views/volunteer/ChangeVolunteers.vue"),
+                    path: "reviewSocialwork/:Id",
+                    name: "reviewSocialwork",
+                    component: () => import("@/views/social/reviewSocialwork.vue"),
+                 
                 },
                 {
-                    path: "changeSocialworks",
-                    name: "changeSocialworks",
-                    component: () => import("@/views/social/ChangeSocialwork.vue"),
+                    path: "SocialCheckListView",
+                    name: "SocialCheckListView",
+                    component: () => import("@/views/social/SocialCheckListView.vue"),
+                 
                 },
                 {
                     path: "ticket",
@@ -186,6 +231,11 @@ const router = createRouter({
                     path: "notice",
                     name: "notice",
                     component: () => import("@/views/notice/SendNotice.vue")
+                },
+                {
+                    path: "export",
+                    name: "export",
+                    component: () => import("@/views/miscellany/ExportView.vue")
                 }
             ]
         },

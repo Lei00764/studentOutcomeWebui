@@ -71,9 +71,9 @@ loginApi.getUserInfo().then(response => {
             menus.v = [
                 { "title": "首页", "icon": "fi-rr-home", "path": "/" },
                 { "title": "竞赛填报", "icon": "fi-rr-trophy", "path": "/competition" },
-                { "title": "论文填报", "icon": "fi-rr-file", "path": "/paper" },
+                { "title": "论文填报", "icon": "fi-rr-scroll", "path": "/paper" },
                 { "title": "专利填报", "icon": "fi-rr-bulb", "path": "/patent" },
-                { "title": "志愿服务", "icon": "fi-rr-room-service", "path": "/volunteers" },
+                { "title": "志愿服务", "icon": "fi-rr-room-service", "path": "/volunteer" },
                 { "title": "社会活动", "icon": "fi-rr-users", "path": "/socialWork" },
                 { "title": "工单填写", "icon": "fi-rr-edit", "path": "/ticket" },
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
@@ -84,12 +84,16 @@ loginApi.getUserInfo().then(response => {
 
                 { "title": "首页", "icon": "fi-rr-home", "path": "/" },
                 { "title": "审核参赛信息", "icon": "fi-rr-trophy", "path": "/competitionCheck" },
-                { "title": "审核专利信息", "icon": "fi-rr-trophy", "path": "/patentCheck" },
+                { "title": "竞赛信息管理", "icon": "fi-rr-trophy", "path": "/competitionManage" },
+                { "title": "审核专利信息", "icon": "fi-rr-bulb", "path": "/patentCheck" },
+                { "title": "审核社会活动信息", "icon": "fi-rr-users", "path": "/SocialCheckListView" },
+                { "title": "审核论文信息", "icon": "fi-rr-scroll", "path": "/paperCheck" },
+                { "title": "审核志愿活动信息", "icon": "fi-rr-room-service", "path": "/volunteerCheck" },
                 { "title": "发布通知", "icon": "fi-rr-megaphone", "path": "/notice" },
                 { "title": "审批工单", "icon": "fi-rr-clipboard", "path": "/reviewTicket" },
-                {"title":"用户管理","icon":"fi-rr-user", "path":"/userManagement"},
+                { "title": "用户管理", "icon":"fi-rr-user", "path":"/userManagement"},
+                { "title": "表格导出", "icon": "fi-rr-file", "path": "/export"},
                 { "title": "修改密码", "icon": "fi-rr-key", "path": "/user" },
-                { "title": "竞赛管理", "icon": "fi-rr-settings", "path": "/competitionManage"}
             ]
     }
     loadComplete.value = false;

@@ -1,4 +1,5 @@
 /**
+ * @deprecated 别用这个
  * 获取当前的审核会话id，如果没有就创建一个
  * @param{boolean} getNewOne 强行获得一个新的审核会话id
  * @return {number}
