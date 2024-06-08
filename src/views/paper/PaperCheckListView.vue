@@ -94,6 +94,12 @@ const searchableFields = [
             { name: "审核通过", value: 2 },
             { name: "审核不通过", value: 3 },
         ]
+    },
+    {
+        field: "paper_situation", name: "论文状态", canApproximate: false,
+        selections: [
+
+        ]
     }
 ]
 
@@ -112,7 +118,9 @@ const getPaper = () => {
             userId,
             currentPage.value
         ).then(res => {
-            console.log("看这里", res.json.content)
+            for(let record of res.json.content) {
+                record.stu_name = selectedStudent.value.stu_name
+            }
             content.v = res.json.content
             total.value = res.json.count
             if (firstFetch) {
@@ -133,7 +141,6 @@ const getPaper = () => {
             fields,
             currentPage.value
         ).then(res => {
-            console.log("看这里", res.json.content)
             content.v = res.json.content
             total.value = res.json.count
             if (firstFetch) {
@@ -159,8 +166,7 @@ const onClear = () => {
 
 ///////////////////////
 const goStartCheck = (row) => {
-    checkSessionUtil.getCheckSessionId(true);
-    router.push("/paperCheck/" + row.paper_id)
+    router.push("/paperCheck/" + row.id)
 }
 
 
@@ -240,6 +246,7 @@ onBeforeMount(() => {
         console.log(res.json)
         for (let state of res.json.states) {
             paperStates[state.id] = state.state_name
+            searchableFields[3].selections.push({name: state.state_name, value: state.id})
         }
 
     }).then(() => {
@@ -326,13 +333,13 @@ onBeforeMount(() => {
 
         <el-table ref="multipleTableRef" :data="content.v" style="width: 100%"
             @selection-change="handleSelectionChange">
-            <el-table-column property="paper_id" label="ID" />
-            <el-table-column property="paper_author" label="论文作者"></el-table-column>
+            <el-table-column property="id" label="ID" />
+            <el-table-column property="stu_name" label="申请人" />
+            <el-table-column property="paper_author" label="论文作者" />
             <el-table-column property="paper_title" label="论文标题" />
-            <el-table-column property="paper_type" label="论文等级" />
             <el-table-column label="论文状态">
                 <template #default="scope">
-                    {{ console.log(paperStates) ? "" : paperStates[scope.row.paper_situation] }}
+                    {{ paperStates[scope.row.paper_situation] }}
                 </template>
             </el-table-column>
             <el-table-column label="审核状态">

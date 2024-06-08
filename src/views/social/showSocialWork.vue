@@ -83,12 +83,12 @@ const toYYYYmmDD = (dateStr) => {
 const societyTypes = {}
 
 onBeforeMount(async () => {
-    let types = (await api.getTypes()).json.types
+    let types = (await api.viewApi.getTypes()).json.types
     for (let type of types) {
         societyTypes[type.id] = type.type_name
     }
 
-    const response = await api.getStudentRecords(); // 假设你有一个名为getSocialActivities的方法来获取社会实践的数据
+    const response = await api.viewApi.getStudentRecords(); // 假设你有一个名为getSocialActivities的方法来获取社会实践的数据
     socialActivities.value = response.json.societies; //获取社会实践的数据
 })
 </script>

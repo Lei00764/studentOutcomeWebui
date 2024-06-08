@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute } from "vue-router";
 import router from "@/router";
-import { computed, reactive, ref, watch } from "vue";
+import {computed, onBeforeMount, reactive, ref, watch} from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import api from "@/api/paper";
 import CertificateUpload from "@/components/CertificateUpload.vue";
@@ -18,15 +18,17 @@ watch(route, (old, newRoute) => {
         reloadPage();
 });
 
-const papers = ref([]);
-
 const paperStates = ref([]);
 
 const loading = ref(false);
 
 const operationLogs = ref([]);
 const certificateUpload = ref();
-const certUrl = ref("");
+/**
+ *
+ * @type {import("vue").Ref<SimpleStudent>}
+ */
+const student = ref({stu_id: "", stu_name: "", grade: "", user_id: -1})
 const isCertImageChanged = ref(false);
 const statusCode = ref(0);
 const checkMessage = ref("");
@@ -35,7 +37,7 @@ const infoNotChanged = ref(true);
 
 const queryForm = reactive({
     paperTitle: "",
-    paperType: "",  //论文等级
+    paperType: 0,
     submissionDate: "",
     authors: "", 
     abstract: "", 
@@ -52,20 +54,19 @@ const statusCodeList = {
 const reloadPage = () => {
     console.log(paperId + "paperId");
         api.editApi.selectStuRecordById(paperId).then((res) => {
-            let paper = res.json;
+            let paper = res.json.paper;
 
-            papers.value = [paper];
             queryForm.paperTitle = paper.paper_title;
-            queryForm.paperType = paper.paper_type;
+            queryForm.paperType = paper.paper_situation;
             queryForm.submissionDate = paper.submission_date;
             queryForm.authors = paper.paper_author;
             queryForm.abstract = paper.paper_abstract;
-            queryForm.attachment = paper.attachments ? "/certImg/" + paper.attachments : null;
             
             statusCode.value = paper.verify_status;
-
+            student.value = res.json.student
             isCertImageChanged.value = false;
-            certUrl.value = paper.attachments;
+            operationLogs.value = res.json.logs
+
         }).catch((error) => {
             console.log("error:", error);
             loading.value = false;
@@ -75,22 +76,32 @@ const reloadPage = () => {
         isCertImageChanged.value = false;
         infoNotChanged.value = true;
     };
-reloadPage();
+
+onBeforeMount(() => {
+    api.getStates().then(res => {
+        paperStates.value = res.json.states
+        reloadPage();
+    })
+})
 
 const onSaveButtonClicked = () => {
+    /**
+     *
+     * @type Paper
+     */
     let newPaper = {
-        paper_abstract: queryForm.abstract,
-        submissionDate: new Date(queryForm.submissionDate).toISOString().split('T')[0],
-        attachments:  queryForm.attachment,
+        id: paperId,
         paper_title: queryForm.paperTitle,
         paper_author: queryForm.authors,
-        paper_type:queryForm.paper_type,
-        paper_id: paperId,
+        paper_abstract: queryForm.abstract,
+        submission_date: new Date(queryForm.submissionDate).toISOString().split('T')[0],
+        // attachments:  queryForm.attachment,
+        paper_situation:queryForm.paperType,
         verify_status: -1
     };
     api.editApi.changeRecord(newPaper)
         .then(async (res) => {
-            await uploadImg();
+            // await uploadImg();
             ElMessage.success("论文信息保存成功");
             reloadPage();
         })
@@ -202,12 +213,10 @@ const onCertImgChanged = () => {
             </el-col>
             <el-col :span="2"></el-col>
             <el-col :span="6">
-                <el-form-item label="论文等级">
-                    <el-input
-                        v-model="queryForm.paperType"
-                        placeholder="请输入论文等级"
-                        @input="setInfoChanged"
-                    />
+                <el-form-item label="论文状态">
+                    <el-select v-model="queryForm.paperType" placeholder="请选择论文的当前状态">
+                        <el-option v-for="type in paperStates" :label="type.state_name" :value="type.id" :key="type.id"></el-option>
+                    </el-select>
                 </el-form-item>
             </el-col>
             <el-col :span="2"></el-col>
@@ -228,23 +237,23 @@ const onCertImgChanged = () => {
                 </el-form-item>
             </el-col>
         </el-row>
-        <el-row>
-            <el-col :span="24">
-                <el-form-item label="证明材料">
-                    <certificate-upload
-                        ref="certificateUpload"
-                        @image-changed="onCertImgChanged"
-                        v-model:cert-url="queryForm.attachment"
-                        record-type="paper"
-                        :record-id="paperId"
-                    />
-                </el-form-item>
+<!--        <el-row>-->
+<!--            <el-col :span="24">-->
+<!--                <el-form-item label="证明材料">-->
+<!--                    <certificate-upload-->
+<!--                        ref="certificateUpload"-->
+<!--                        @image-changed="onCertImgChanged"-->
+<!--                        v-model:cert-url="queryForm.attachment"-->
+<!--                        record-type="paper"-->
+<!--                        :record-id="paperId"-->
+<!--                    />-->
+<!--                </el-form-item>-->
 
-            </el-col>
-        </el-row>
+<!--            </el-col>-->
+<!--        </el-row>-->
         <el-row>
             <el-col :span="24">
-                <el-form-item label="论文摘要">
+                <el-form-item label="附加信息">
                     <el-input
                         v-model="queryForm.abstract"
                         type="textarea"
@@ -255,11 +264,27 @@ const onCertImgChanged = () => {
             </el-col>
         </el-row>
 
+        <el-row>
+            <p class="sectionTitle">申请人</p>
+        </el-row>
+        <el-row>
+            <el-col :span="6">
+                <el-form-item label="学号">
+                    {{student.stu_id}}
+                </el-form-item>
+            </el-col>
+            <el-col :span="6">
+                <el-form-item label="姓名">
+                    {{student.stu_name}}
+                </el-form-item>
+            </el-col>
+        </el-row>
+
         <el-col>
             <p class="sectionTitle">操作日志</p>
         </el-col>
         <el-timeline>
-            <el-timeline-item v-for="(activity, index) in queryForm.operationLogs" :key="index" :timestamp="activity.operation_time">
+            <el-timeline-item v-for="(activity, index) in operationLogs" :key="index" :timestamp="activity.operation_time">
                 {{ activity.operation_text }}
             </el-timeline-item>
         </el-timeline>

@@ -41,80 +41,12 @@ import request from "@/utils/request"
  * @property {number} operation_level - The level of the operation.
  */
 
-/**
- *
- * @param {Society} newSociety
- * @return {Promise<ParsedResponse<{
- *     newSocietyId: number
- * }>>}
- */
-const submitCreate = (newSociety) => {
-    return request.post('/api/social/insertSociety',
-        {
-            newSociety
-        }
-    )
-}
 
-/**
- * 返回当前用户所有的社会活动记录
- * @return {Promise<ParsedResponse<{
- *     societies: SimpleSociety[]
- * }>>}
- */
-const getStudentRecords = () => {
-    return request.get('/api/social/selectStuRecord');
-};
-
-/**
- * 返回id指定的社会活动记录
- * @return {Promise<ParsedResponse<{
- *     society: Society
- *     logs: SocietyOperationLog[]
- * }>>}
- */
-const getRecordById = (id) => {
-    return request.post('/api/social/selectStuRecordById', {
-        societyId: id
-    })
-}
-
-
-const deleteRecord = (societyId) => {
-    return request.post('/api/social/deleteStuRecord', {
-        societyId
-    })
-}
-
-const submitToReview = (societyId) => {
-    return request.post('/api/social/submitToReview', {
-        societyId
-    })
-}
-
-const withdrawReview = (societyId) => {
-    return request.post('/api/social/withdrawReview', {
-        societyId
-    })
-}
-
-/**
- *
- * @param {Society} newSociety
- * @return {Promise<ParsedResponse<{
- *     newSocietyId: number
- * }>>}
- */
-const changeRecord = (newSociety) => {
-    return request.post(
-        '/api/social/changeSociety', {newSociety}
-    )
-}
 
 const checkApi = {
     changeVerifyStatus: (socialId, statusId, checkMessage) => {
         return request.post("/api/social/check/changeVerifyStatus", {
-            social_id: socialId,
+            society_id: socialId,
             status: statusId,
             msg: checkMessage
         })
@@ -132,15 +64,15 @@ const checkApi = {
      * @param {number} pageNo 页码，一页20个？
      * @return {Promise}
      */
-    getsocialWithKeyword: (fields, pageNo) => {
-        return request.post("/api/social/check/getsocial",{
+    getSocialWithKeyword: (fields, pageNo) => {
+        return request.post("/api/social/check/getSociety",{
             fields: fields,
             page: pageNo
         })
     },
 
-    getsocialWithStudent: (userId, pageNo) => {
-        return request.post("/api/social/check/getsocial",{
+    getSocialWithStudent: (userId, pageNo) => {
+        return request.post("/api/social/check/getSociety",{
             user_id: userId,
             page: pageNo
         })
@@ -148,44 +80,94 @@ const checkApi = {
 }
 
 const editApi = {
-    getsocialInfo: (socialId) => {
-        console.log('api',socialId)
-        return request.post("/api/social/getsocialInfo", { social_id: socialId })
-    },
-    uploadImage: (socialId, imgBlob) => {
-        return request.post("/api/social/uploadImage", {
-            social_id: socialId,
-            image: imgBlob
-        }, {
-            headers: {
-                "Content-Type": "multipart/form-data"
+    /**
+     *
+     * @param {Society} newSociety
+     * @return {Promise<ParsedResponse<{
+     *     newSocietyId: number
+     * }>>}
+     */
+    submitCreate: (newSociety) => {
+        return request.post('/api/social/insertSociety',
+            {
+                newSociety
             }
+        )
+    },
+
+
+    deleteRecord: (societyId) => {
+        return request.post('/api/social/deleteStuRecord', {
+            societyId
         })
     },
-    clearCertImage: (socialId) => {
-        return request.post("/api/social/clearCertImage", { social_id: socialId })
+
+    submitToReview: (societyId) => {
+        return request.post('/api/social/submitToReview', {
+            societyId
+        })
     },
+
+    withdrawReview: (societyId) => {
+        return request.post('/api/social/withdrawReview', {
+            societyId
+        })
+    },
+
+    /**
+     *
+     * @param {Society} newSociety
+     * @return {Promise<ParsedResponse<{
+     *     newSocietyId: number
+     * }>>}
+     */
+    changeRecord: (newSociety) => {
+        return request.post(
+            '/api/social/changeSociety', {newSociety}
+        )
+    }
  
 }
 
-/**
- *
- * @return {Promise<ParsedResponse<{
- *  types: SocietyType[]
- * }>>}
- */
-const getTypes = () => {
-    return request.get("/api/social/getTypes");
+
+
+const viewApi = {
+    /**
+     *
+     * @return {Promise<ParsedResponse<{
+     *  types: SocietyType[]
+     * }>>}
+     */
+    getTypes: () => {
+        return request.get("/api/social/getTypes");
+    },
+    /**
+     * 返回当前用户所有的社会活动记录
+     * @return {Promise<ParsedResponse<{
+     *     societies: SimpleSociety[]
+     * }>>}
+     */
+    getStudentRecords: () => {
+        return request.get('/api/social/selectStuRecord');
+    },
+
+    /**
+     * 返回id指定的社会活动记录
+     * @return {Promise<ParsedResponse<{
+     *     society: Society
+     *     logs: SocietyOperationLog[],
+     *     student: SimpleStudent
+     * }>>}
+     */
+    getRecordById: (id) => {
+        return request.post('/api/social/selectStuRecordById', {
+            societyId: id
+        })
+    }
 }
+
 export default {
-    submitCreate,
-    deleteRecord,
-    changeRecord,
+    viewApi,
     checkApi,
     editApi,
-    getTypes,
-    getStudentRecords,
-    getRecordById,
-    submitToReview,
-    withdrawReview
 }

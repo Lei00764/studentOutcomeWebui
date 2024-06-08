@@ -125,7 +125,7 @@ export default {
             }
 
             if(this.societyId === -1) {
-                api.submitCreate(newSociety)
+                api.editApi.submitCreate(newSociety)
                     .then((res) => {
                         this.societyId = res.json.newSocietyId;
                         ElMessage.success("成功创建社会服务信息");
@@ -150,7 +150,7 @@ export default {
                     error.defaultHandler()
                 })
             } else {
-                api.changeRecord(newSociety)
+                api.editApi.changeRecord(newSociety)
                     .then((res) => {
                         ElMessage.success("成功保存社会服务信息")
                     }).then(() => {
@@ -167,7 +167,7 @@ export default {
         },
 
         onSubmitToReview() {
-            api.submitToReview(this.societyId).then(res => {
+            api.editApi.submitToReview(this.societyId).then(res => {
                 ElMessage.success("成功提交审核")
                 this.verify_status = 1;
             }).catch(error => {
@@ -177,7 +177,7 @@ export default {
         },
 
         onWithdrawReview() {
-            api.withdrawReview(this.societyId).then(res => {
+            api.editApi.withdrawReview(this.societyId).then(res => {
                 ElMessage.success("成功撤回审核申请")
                 this.verify_status = 0;
             }).catch(error => {
@@ -199,14 +199,14 @@ export default {
         },
         async getRecord() {
             try {
-                this.societyTypes = (await api.getTypes()).json.types
+                this.societyTypes = (await api.viewApi.getTypes()).json.types
 
                 if(router.currentRoute.value.params?.teamId === "new") {
                     this.societyId = -1
                 } else {
                     this.societyId = parseInt(router.currentRoute.value.params.teamId)
 
-                    let res = await api.getRecordById(this.societyId)
+                    let res = await api.viewApi.getRecordById(this.societyId)
                     let remoteSociety = res.json.society
                     this.socialWork.duration_day = remoteSociety.duration_day
                     this.socialWork.social_detail = remoteSociety.society_detail

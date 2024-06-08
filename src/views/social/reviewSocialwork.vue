@@ -19,29 +19,34 @@ watch(route, (old, newRoute) => {
         reloadPage();
 })
 
-const socialworks = ref([])
-
 const socialworkStates = ref([])
 
 const loading = ref(false)
 
 const operationLogs = ref([])
 const certificateUpload = ref()
-const certUrl = ref("")
+
 const isCertImageChanged = ref(false)
 const statusCode = ref(0)
 const checkMessage = ref("")
 
 const infoNotChanged = ref(true)
 
+/**
+ *
+ * @type {import("vue").Ref<SimpleStudent>}
+ */
+const student = ref({stu_id: "", stu_name: "", grade: "", user_id: -1})
 const queryForm = reactive({
     socialworkName: "",
     socialworkAuthor: "",
-    awardDate: null,  //submissionDate
-    desc: "",  //socialwork_abstract
+    awardDate: "",  //submissionDate
+    desc: "",
     socialwork_situation: 0,
-    attachment: null,
-    operationLogs: []
+    attachment: "",
+    operationLogs: [],
+    durationHour: 0,
+    durationDay: 0
 })
 
 const statusCodeList = {
@@ -54,25 +59,26 @@ const statusCodeList = {
 
 const reloadPage = () => {
     console.log(socialworkId + "socialworkId")
-    api.getTypes().then(res => {
-        socialworkStates.value = res.json.states
+    api.viewApi.getTypes().then(res => {
+        socialworkStates.value = res.json.types
     }).then(() => {
-        api.getRecordById(socialworkId).then(res => {
-            let socialwork = res.json.socialwork
+        api.viewApi.getRecordById(socialworkId).then(res => {
+            let socialWork = res.json.society
 
-            socialworks.value = [socialwork]
-            queryForm.socialworkName = socialwork.socialwork_title
-            queryForm.socialworkAuthor = socialwork.socialwork_author
-            queryForm.awardDate = socialwork.submission_date
-            queryForm.desc = socialwork.socialwork_abstract
-            queryForm.socialwork_situation = socialwork.socialwork_situation
-            queryForm.attachment = socialwork.attachments ? "/certImg/" + socialwork.attachments : null;
+            queryForm.socialworkName = socialWork.society_name
+            queryForm.awardDate = socialWork.participate_time
+            queryForm.desc = socialWork.society_detail
+            queryForm.socialwork_situation = socialWork.society_type
+            queryForm.attachment = socialWork.evidence ? "/certImg/" + socialWork.evidence : null;
+            queryForm.durationHour = socialWork.duration_hour
+            queryForm.durationDay = socialWork.duration_day
+
+            statusCode.value = socialWork.verify_status;
             queryForm.operationLogs = res.json.logs
-
-            statusCode.value = socialwork.verify_status;
+            student.value = res.json.student
 
             isCertImageChanged.value = false
-            certUrl.value = socialwork.attachments;
+
         }).catch(error => {
             console.log("error:", error)
             loading.value = false
@@ -87,14 +93,23 @@ const reloadPage = () => {
 reloadPage()
 
 const onSaveButtonClicked = () => {
-    let newSocialwork = {
+    /**
+     *
+     * @type Society
+     */
+    let newSocialWork = {
         //左边是api中获取的变量，右边是paper中自己设定的变量
-        social_detail: queryForm.desc,
+        id: socialworkId,
+        society_name: queryForm.socialworkName,
+        society_type: queryForm.socialwork_situation,
         participate_time: queryForm.awardDate,
-        social_name: queryForm.socialworkName,
-        social_id: socialworkId,
+        duration_day: queryForm.durationDay,
+        duration_hour: queryForm.durationHour,
+        verify_status: -1,
+        society_detail: queryForm.desc,
+        evidence: ""
     }
-    api.changeRecord(newSocialwork)
+    api.editApi.changeRecord(newSocialWork)
         .then(async res => {
             await uploadImg();
             ElMessage.success("社会服务信息保存成功");
@@ -122,16 +137,28 @@ const onRevertButtonClicked = () => {
 }
 
 const onPassButtonClicked = async () => {
-    await api.checkApi.changeVerifyStatus(socialworkId, 2, checkMessage.value);
-    reloadPage()
-    //await onNextButtonClicked();
+    try {
+        await api.checkApi.changeVerifyStatus(socialworkId, 2, checkMessage.value);
+        ElMessage.success("审核通过记录保存成功");
+        reloadPage()
+    } catch (error) {
+        if (error.network) return;
+        error.defaultHandler();
+    }
+
+
 }
 
 const onDenyButtonClicked = async () => {
-    await api.checkApi.changeVerifyStatus(socialworkId, 3, checkMessage.value);
-    reloadPage()
-    //await onNextButtonClicked();
-    checkMessage.value = "";
+    try {
+        await api.checkApi.changeVerifyStatus(socialworkId, 2, checkMessage.value);
+        checkMessage.value = "";
+        ElMessage.success("审核不通过记录保存成功");
+        reloadPage()
+    } catch (error) {
+        if (error.network) return;
+        error.defaultHandler();
+    }
 }
 
 const onGoBackButtonClicked = () => {
@@ -195,14 +222,52 @@ const onCertImgChanged = () => {
             </el-col>
             <el-col :span="2"></el-col>
             <el-col :span="6">
-                <el-form-item label="社会服务人员">
-                    <el-input v-model="queryForm.socialworkAuthor" placeholder="请输入社会服务人员" @input="setInfoChanged" />
+                <el-form-item label="志愿类型">
+                    <el-select v-model="queryForm.socialwork_situation" placeholder="请选择">
+                        <el-option v-for="state in socialworkStates" :label="state.type_name" :value="state.id" :key="state.id"></el-option>
+                    </el-select>
                 </el-form-item>
             </el-col>
             <el-col :span="2"></el-col>
             <el-col :span="6">
-                <el-form-item label="社会服务时长">
-                    <el-input v-model="queryForm.awardDate" placeholder="请输入社会服务时长" @input="setInfoChanged" />
+                <el-form-item label="志愿活动日期">
+                    <el-date-picker
+                        v-model="queryForm.awardDate"
+                        type="date"
+                        placeholder="请选择"
+                        @change="setInfoChanged"
+                    />
+                </el-form-item>
+            </el-col>
+        </el-row>
+        <el-row>
+            <el-col :span="18">
+                <el-form-item label="志愿时长">
+                    <el-col :span="8">
+                        <el-input
+                            v-model="queryForm.durationDay"
+                            placeholder="请输入社会活动时长"
+                            @input="setInfoChanged"
+                        />
+                    </el-col>
+                    <el-col :span="3">
+                        <div style="width: 100%; text-align: center" >
+                             天
+                        </div>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-input
+                            v-model="queryForm.durationHour"
+                            placeholder="请输入社会活动时长"
+                            @input="setInfoChanged"
+                        />
+                    </el-col>
+                    <el-col :span="3">
+                        <div style="width: 100%; text-align: center" >
+                            小时
+                        </div>
+                    </el-col>
+
                 </el-form-item>
             </el-col>
         </el-row>
@@ -229,6 +294,22 @@ const onCertImgChanged = () => {
             <el-col :span="24">
                 <el-form-item label="社会服务摘要">
                     <el-input v-model="queryForm.desc" type="textarea" placeholder="" @input="setInfoChanged" />
+                </el-form-item>
+            </el-col>
+        </el-row>
+
+        <el-row>
+            <p class="sectionTitle">申请人</p>
+        </el-row>
+        <el-row>
+            <el-col :span="6">
+                <el-form-item label="学号">
+                    {{student.stu_id}}
+                </el-form-item>
+            </el-col>
+            <el-col :span="6">
+                <el-form-item label="姓名">
+                    {{student.stu_name}}
                 </el-form-item>
             </el-col>
         </el-row>

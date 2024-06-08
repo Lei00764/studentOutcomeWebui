@@ -22,6 +22,8 @@ const queryFormReal = {
 const currentPage = ref(1)
 const total = ref(1)
 
+const socialWorkTypes = ref(new Map())
+
 const fields = [
     { field: "Socialwork_title", name: "社会服务名称" },
 ]
@@ -34,7 +36,7 @@ const onSubmit = () => {
     queryFormReal.field = queryForm.field.valueOf()
     queryFormReal.keyword = queryForm.keyword.valueOf()
     queryFormReal.precise = queryForm.precise.valueOf()
-    getSocialwork()
+    getSocialWork()
 }
 
 
@@ -57,8 +59,6 @@ const statusCode = {
     3: { name: "审核不通过", tagType: "danger" }
 }
 
-
-let SocialworkStates = {}
 /**
  * @typedef FieldSelection 一个字段的所有可选关键词
  * @property {string} name 关键词显示名
@@ -84,7 +84,7 @@ let SocialworkStates = {}
  */
 const searchableFields = [
     { field: "id", name: "ID", canApproximate: false },
-    { field: "Socialwork_title", name: "社会服务名称", canApproximate: true },
+    { field: "society_name", name: "社会服务名称", canApproximate: true },
     {
         field: "verify_status", name: "状态", canApproximate: false,
         selections: [
@@ -93,7 +93,13 @@ const searchableFields = [
             { name: "审核通过", value: 2 },
             { name: "审核不通过", value: 3 },
         ]
-    }
+    },
+    {
+        field: "society_type", name: "类型", canApproximate: false,
+        selections: [
+
+        ]
+    },
 ]
 
 
@@ -105,15 +111,18 @@ const selectedFields = ref([
 ])
 const selectedStudent = ref({})
 
-const getSocialwork = () => {
+const getSocialWork = () => {
     console.log('start')
     if (studentQuery.value) {
         let userId = selectedStudent.value.user_id;
-        api.checkApi.getSocialworkWithStudent(
+        api.checkApi.getSocialWithStudent(
             userId,
             currentPage.value
         ).then(res => {
-            console.log("看这里", res.json.content)
+            for(let record of res.json.content) {
+                record.stu_name = selectedStudent.value.stu_name
+            }
+
             content.v = res.json.content
             total.value = res.json.count
             if (firstFetch) {
@@ -130,11 +139,10 @@ const getSocialwork = () => {
                 fields.push(sf.sf)
         }
 
-        api.checkApi.getsocialWithKeyword(
+        api.checkApi.getSocialWithKeyword(
             fields,
             currentPage.value
         ).then(res => {
-            console.log("看这里", res.json.content)
             content.v = res.json.content
             total.value = res.json.count
             if (firstFetch) {
@@ -148,10 +156,8 @@ const getSocialwork = () => {
 
 }
 
-getSocialwork()
-
 watch(currentPage, () => {
-    getSocialwork()
+    getSocialWork()
 })
 
 const onClear = () => {
@@ -230,12 +236,30 @@ const selectStudent = () => {
 
 onBeforeMount(() => {
     // 预先设置好选择“等待审核”状态
-
     selectedFields.value.push({
         f: searchableFields[2],
         sf: { field: 'verify_status', keyword: 1 }
     })
+
+    api.viewApi.getTypes().then(res => {
+        let states = res.json.types
+        for(let state of states) {
+            socialWorkTypes.value.set(state.id, state.type_name)
+            searchableFields[3].selections.push({name: state.type_name, value: state.id})
+        }
+        getSocialWork()
+    })
+
+
 })
+
+const toYYYYmmDD = (dateStr) => {
+    let date = new Date(dateStr)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
 </script>
 
@@ -317,12 +341,23 @@ onBeforeMount(() => {
             @selection-change="handleSelectionChange">
             <el-table-column property="id" label="ID" />
             <el-table-column property="stu_name" label="申请学生"></el-table-column>
-            <el-table-column property="Socialwork_title" label="社会服务名称" />
-            <el-table-column property="Socialwork_level" label="社会服务等级" />
+            <el-table-column property="society_name" label="社会服务名称" />
+            <el-table-column property="vol_type" label="社会服务类型" >
+                <template #default="scope">
+                    {{ socialWorkTypes.get(scope.row.society_type) }}
+                </template>
+            </el-table-column>
+            <el-table-column property="participate_time" label="社会服务日期" >
+                <template #default="scope">
+                    {{ toYYYYmmDD(scope.row.participate_time) }}
+                </template>
+            </el-table-column>
+            <el-table-column property="duration_day" label="时长/天" />
+            <el-table-column property="duration_hour" label="时长/小时" />
             <el-table-column label="审核状态">
                 <template #default="scope">
-                    <el-tag :type="statusCode[scope.row.status_code].tagType">
-                        {{ statusCode[scope.row.status_code].name }}
+                    <el-tag :type="statusCode[scope.row.verify_status].tagType">
+                        {{ statusCode[scope.row.verify_status].name }}
                     </el-tag>
                 </template>
             </el-table-column>

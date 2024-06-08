@@ -57,7 +57,8 @@ const editApi = {
      * @param {number} paperId
      * @return {Promise<ParsedResponse<{
      *     paper: Paper
-     *     logs: [PaperOperationLog]
+     *     logs: [PaperOperationLog],
+     *     student: SimpleStudent
      * }>>}
      */
     selectStuRecordById: (paperId) => {
@@ -112,7 +113,7 @@ const editApi = {
 
 const checkApi = {
     changeVerifyStatus: (paperId, statusId, checkMessage) => {
-        return request.post("/api/patent/check/changeVerifyStatus", {
+        return request.post("/api/paper/check/changeVerifyStatus", {
             paper_id: paperId,
             status: statusId,
             msg: checkMessage

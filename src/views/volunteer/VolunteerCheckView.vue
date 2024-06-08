@@ -44,7 +44,7 @@ const queryForm = reactive({
  *
  * @type {import("vue").Ref<SimpleStudent>}
  */
-const student = ref({})
+const student = ref({stu_id: "", stu_name: "", grade: "", user_id: -1})
 
 const statusCodeList = {
     0: { name: "草稿", tagType: "info" },
