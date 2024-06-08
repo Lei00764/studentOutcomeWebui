@@ -111,6 +111,13 @@ const editApi = {
 }
 
 const checkApi = {
+    changeVerifyStatus: (paperId, statusId, checkMessage) => {
+        return request.post("/api/patent/check/changeVerifyStatus", {
+            paper_id: paperId,
+            status: statusId,
+            msg: checkMessage
+        })
+    },
 
 
     /**
