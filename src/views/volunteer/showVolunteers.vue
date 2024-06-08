@@ -50,8 +50,10 @@ const statusCodeList = {
 const volunteers = ref([])
 const volunteerStates = new Map()
 
+
 const goToCreateVolunteerForm = () => {
   router.push('/volunteer/new')  // 这里的路径应该是填报志愿信息页面的路径
+
 }
 
 onBeforeMount(async () => {
